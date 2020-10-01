@@ -1,9 +1,7 @@
 import re
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from django.core.serializers.json import DjangoJSONEncoder
-from django.utils.encoding import force_text
-from django.utils.functional import Promise
+from json_ext_encoder import JSONEncoder
 from rest_framework import fields, serializers
 
 SerializerType = Union[
@@ -47,12 +45,6 @@ class ProcessingMixin:
             self.TYPE_MAP_OVERRIDES_KEY, {}
         )
 
-    @staticmethod
-    def _translate(val):
-        if isinstance(val, Promise):
-            return force_text(val)
-        return val
-
     def _get_type_map_value(self, field: SerializerType, name: Optional[str] = None):
         result = None
         if name:
@@ -68,7 +60,7 @@ class ProcessingMixin:
         result = field.label
         if result is None:
             result = name.title().replace('_', ' ').replace('.', ': ')
-        return self._translate(result)
+        return result
 
     @staticmethod
     def _filter_fields(all_fields: Tuple) -> Tuple:
@@ -114,7 +106,7 @@ class SchemaProcessor(ProcessingMixin):
             class_name = type(self.serializer).__name__
         class_name = class_name.replace('Serializer', '')
         class_name = ' '.join(re.findall('[A-Z][^A-Z]*', class_name))
-        return self._translate(class_name)
+        return class_name
 
     def _required_fields(self) -> List[str]:
         return [
@@ -142,18 +134,16 @@ class SchemaProcessor(ProcessingMixin):
                 if enum == 'choices':
                     choices = field.choices
                     result['enum'] = list(choices.keys())
-                    result['enumNames'] = [self._translate(v) for v in choices.values()]
+                    result['enumNames'] = [v for v in choices.values()]
                 if isinstance(enum, (list, tuple)):
                     if isinstance(enum, (list, tuple)):
                         result['enum'] = [item[0] for item in enum]
-                        result['enumNames'] = [
-                            self._translate(item[1]) for item in enum
-                        ]
+                        result['enumNames'] = [item[1] for item in enum]
                     else:
                         result['enum'] = enum
-                        result['enumNames'] = [self._translate(item) for item in enum]
+                        result['enumNames'] = [item for item in enum]
             try:
-                result['default'] = self._translate(field.get_default())
+                result['default'] = field.get_default()
             except fields.SkipField:
                 pass
         return result
@@ -218,7 +208,7 @@ class UiSchemaProcessor(ProcessingMixin):
         if widget:
             result['ui:widget'] = widget
         if help_text:
-            result['ui:help'] = self._translate(help_text)
+            result['ui:help'] = help_text
         result.update(field.style or {})
         return result
 
@@ -313,7 +303,7 @@ class ColumnProcessor(ProcessingMixin):
         return result
 
 
-class SerializerEncoder(DjangoJSONEncoder):
+class SerializerEncoder(JSONEncoder):
     LIST_ACTION = 'list'
 
     def __init__(self, *args, **kwargs):
