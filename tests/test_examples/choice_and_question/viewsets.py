@@ -2,10 +2,10 @@ from django_mock_queries.query import MockModel, MockSet
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
 
 from drf_react_template.mixins import FormSchemaViewSetMixin
-from tests.test_examples.question_and_choice import serializers
+from tests.test_examples.choice_and_question import serializers
 
 
-class CustomerFeedbackViewSet(
+class ChoiceAndQuestionViewSet(
     ListModelMixin,
     RetrieveModelMixin,
     FormSchemaViewSetMixin,
