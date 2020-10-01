@@ -5,10 +5,11 @@ verify_ssl = true
 
 [dev-packages]
 pre-commit = "*"
+pytest = "*"
 
 [packages]
-django = "==2.2.10"
-djangorestframework = "==3.9.4"
+django = "==2.2.*"
+djangorestframework = "==3.9.*"
 
 [requires]
 python_version = "3.7"
