@@ -11,9 +11,9 @@ class CustomerFeedbackViewSet(
     FormSchemaViewSetMixin,
 ):
     queryset = MockSet(
-        MockModel(mock_name='john', email='john@gmail.com'),
-        MockModel(mock_name='jeff', email='jeff@hotmail.com'),
-        MockModel(mock_name='bill', email='bill@gmail.com'),
+        MockModel(choice_text='Make a choice 1', votes=13),
+        MockModel(choice_text='Make a choice 2', votes=14),
+        MockModel(choice_text='Make a choice 3', votes=15),
     )
 
     type_map_overrides = {
