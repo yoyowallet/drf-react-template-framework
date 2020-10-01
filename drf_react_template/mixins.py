@@ -4,10 +4,7 @@ from rest_framework.mixins import Response
 from rest_framework.viewsets import GenericViewSet
 
 from drf_react_template.renderers import JSONSerializerRenderer
-from drf_react_template.schema_form_encoder import (
-    ColumnProcessor,
-    ProcessingMixin,
-)
+from drf_react_template.schema_form_encoder import ColumnProcessor, ProcessingMixin
 
 
 class FormSchemaViewSetMixin(GenericViewSet):
