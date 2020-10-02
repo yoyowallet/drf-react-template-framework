@@ -1,20 +1,16 @@
-from django_mock_queries.query import MockModel, MockSet
+from django.shortcuts import get_object_or_404
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
 
 from drf_react_template.mixins import FormSchemaViewSetMixin
-from tests.test_examples.choice_and_question import serializers
+from example.polls import models, serializers
 
 
-class ChoiceAndQuestionViewSet(
+class PollViewSet(
     ListModelMixin,
     RetrieveModelMixin,
     FormSchemaViewSetMixin,
 ):
-    queryset = MockSet(
-        MockModel(choice_text='Make a choice 1', votes=13),
-        MockModel(choice_text='Make a choice 2', votes=14),
-        MockModel(choice_text='Make a choice 3', votes=15),
-    )
+    queryset = models.Choice.objects.all().prefetch_related('questions')
 
     type_map_overrides = {
         'questions.pub_date': {'type': 'string', 'widget': 'DatePickerWidget'},
@@ -28,4 +24,7 @@ class ChoiceAndQuestionViewSet(
         return serializers.ChoiceSerializer
 
     def get_object(self):
-        return MockModel(choice_text='Make a choice', votes=10, questions=[])
+        return get_object_or_404(
+            self.get_queryset(),
+            id=self.kwargs['pk'],
+        )

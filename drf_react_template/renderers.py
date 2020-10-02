@@ -28,7 +28,6 @@ class JSONSerializerRenderer(JSONRenderer):
             separators = SHORT_SEPARATORS if self.compact else LONG_SEPARATORS
         else:
             separators = INDENT_SEPARATORS
-
         ret = json.dumps(
             data,
             cls=self.encoder_class,

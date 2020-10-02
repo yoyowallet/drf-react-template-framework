@@ -1,4 +1,17 @@
 import pytest
+from rest_framework.test import APIClient
+
+from example.polls.viewsets import PollViewSet
+
+
+@pytest.fixture
+def api_client():
+    return APIClient()
+
+
+@pytest.fixture
+def polls_list_url():
+    return '/polls/'
 
 
 @pytest.fixture

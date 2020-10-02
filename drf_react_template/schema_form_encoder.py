@@ -1,7 +1,7 @@
 import re
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from json_ext_encoder import JSONEncoder
+from django.core.serializers.json import DjangoJSONEncoder
 from rest_framework import fields, serializers
 
 SerializerType = Union[
@@ -303,7 +303,7 @@ class ColumnProcessor(ProcessingMixin):
         return result
 
 
-class SerializerEncoder(JSONEncoder):
+class SerializerEncoder(DjangoJSONEncoder):
     LIST_ACTION = 'list'
 
     def __init__(self, *args, **kwargs):
