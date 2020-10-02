@@ -1,17 +1,17 @@
 from rest_framework import serializers
 
 
-class ChoiceListSerializer(serializers.Serializer):
-    choice_text = serializers.CharField()
-    votes = serializers.IntegerField(default=0)
+class QuestionListSerializer(serializers.Serializer):
+    question_text = serializers.CharField()
+    pub_date = serializers.DateField(label='date published')
 
     class Meta:
-        fields = ('choice_text', 'votes')
+        fields = ('question_text', 'pub_date')
 
 
 class QuestionsSerializer(serializers.Serializer):
     question_text = serializers.CharField()
-    pub_date = serializers.DateTimeField(label='date published')
+    pub_date = serializers.DateField(label='date published')
 
     class Meta:
         fields = ('question_text', 'pub_date')

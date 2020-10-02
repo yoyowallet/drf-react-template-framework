@@ -1,6 +1,8 @@
 import pytest
 from rest_framework.test import APIClient
 
+from tests import factories
+
 
 @pytest.fixture
 def api_client():
@@ -48,7 +50,7 @@ def choice_and_question_retrieve_expected_ui_schema():
             'items': {
                 'ui:order': ('question_text', 'pub_date'),
                 'question_text': {},
-                'pub_date': {'ui:widget': 'date-time'},
+                'pub_date': {'ui:widget': 'date'},
             }
         },
     }
@@ -57,6 +59,20 @@ def choice_and_question_retrieve_expected_ui_schema():
 @pytest.fixture
 def choice_and_question_list_expected_schema():
     return [
-        {'dataIndex': 'choice_text', 'key': 'choice_text', 'title': 'Choice Text'},
-        {'dataIndex': 'votes', 'key': 'votes', 'title': 'Votes'},
+        {
+            'title': 'Question Text',
+            'dataIndex': 'question_text',
+            'key': 'question_text',
+        },
+        {'title': 'date published', 'dataIndex': 'pub_date', 'key': 'pub_date'},
     ]
+
+
+@pytest.fixture
+def question():
+    return factories.QuestionFactory(choice=choice)
+
+
+@pytest.fixture
+def choice(question):
+    return factories.ChoiceFactory(question=question)

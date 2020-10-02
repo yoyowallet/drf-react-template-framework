@@ -10,17 +10,17 @@ class PollViewSet(
     RetrieveModelMixin,
     FormSchemaViewSetMixin,
 ):
-    queryset = models.Choice.objects.all().prefetch_related('questions')
+    queryset = models.Question.objects.all().prefetch_related('choice_set')
 
     type_map_overrides = {
-        'questions.pub_date': {'type': 'string', 'widget': 'DatePickerWidget'},
-        'questions.question_text': {'type': 'string', 'widget': 'textarea'},
-        'choice_text': {'type': 'string', 'widget': 'textarea'},
+        'pub_date': {'type': 'string', 'widget': 'DatePickerWidget'},
+        'question_text': {'type': 'string', 'widget': 'textarea'},
+        'choices.choice_text': {'type': 'string', 'widget': 'textarea'},
     }
 
     def get_serializer_class(self):
         if self.action == 'list':
-            return serializers.ChoiceListSerializer
+            return serializers.QuestionListSerializer
         return serializers.ChoiceSerializer
 
     def get_object(self):

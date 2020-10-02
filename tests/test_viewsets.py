@@ -1,6 +1,8 @@
 import pytest
 from rest_framework import status
 
+from example.polls import serializers
+
 
 @pytest.mark.django_db
 def test_question_and_choice_viewset_list_empty_data(
@@ -13,3 +15,17 @@ def test_question_and_choice_viewset_list_empty_data(
         'serializer': choice_and_question_list_expected_schema,
         'formData': [],
     }
+
+
+@pytest.mark.django_db
+def test_question_and_choice_viewset_list(
+    api_client, polls_list_url, choice_and_question_list_expected_schema, question
+):
+    response = api_client.get(polls_list_url)
+
+    assert response.status_code == status.HTTP_200_OK
+    response_json = response.json()
+    assert response_json['serializer'] == choice_and_question_list_expected_schema
+    assert response_json['formData'] == [
+        {**serializers.QuestionListSerializer(question).data},
+    ]
