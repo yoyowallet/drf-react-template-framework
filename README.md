@@ -83,10 +83,14 @@ def get_serializer_class(self):
     return ChoiceSerializer
 ```
 
+Since this having a separate `list` serializer is so common, the above can be avoided by using
+the `serializer_list_class` class attribute provided by `FormSchemaViewSetMixin`.
+
 ### Serializer
 
 The majority of the customization will occur inside serializer classes; 
 a real world example will often require custom `create`, `update`, `to_representation`, etc methods. 
+
 The following is a list of parameters that can be added to individual fields which modifies 
 `react-jsonschema-form` functionality on the front-end.
 
