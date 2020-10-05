@@ -4,18 +4,22 @@ from rest_framework.mixins import Response
 from rest_framework.viewsets import GenericViewSet
 
 from drf_react_template.renderers import JSONSerializerRenderer
-from drf_react_template.schema_form_encoder import ColumnProcessor, ProcessingMixin
+from drf_react_template.schema_form_encoder import ColumnProcessor
 
 
 class FormSchemaViewSetMixin(GenericViewSet):
     renderer_classes = (JSONSerializerRenderer,)
+    serializer_list_class = None
 
-    list_fields = []
     list_sort = {}
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return self.serializer_list_class
+        return self.serializer_class
 
     def get_renderer_context(self):
         context = super().get_renderer_context()
-        context[ColumnProcessor.LIST_FIELDS_KEY] = self.list_fields
         context[ColumnProcessor.LIST_FIELDS_SORT_KEY] = self.list_sort
         return context
 

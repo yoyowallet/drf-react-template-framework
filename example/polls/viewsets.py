@@ -11,11 +11,8 @@ class PollViewSet(
     FormSchemaViewSetMixin,
 ):
     queryset = models.Question.objects.all().prefetch_related('choice_set')
-
-    def get_serializer_class(self):
-        if self.action == 'list':
-            return serializers.QuestionListSerializer
-        return serializers.QuestionSerializer
+    serializer_class = serializers.QuestionSerializer
+    serializer_list_class = serializers.QuestionListSerializer
 
     def get_object(self):
         return get_object_or_404(

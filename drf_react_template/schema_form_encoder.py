@@ -1,5 +1,5 @@
 import re
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union
 
 from django.core.serializers.json import DjangoJSONEncoder
 from rest_framework import fields, serializers
@@ -240,30 +240,9 @@ class ColumnProcessor(ProcessingMixin):
         prefix: str = '',
     ):
         super(ColumnProcessor, self).__init__(serializer, renderer_context, prefix)
-        self.list_fields: List[str] = self.renderer_context.get(
-            self.LIST_FIELDS_KEY, []
-        )
         self.list_sort: Dict[str, str] = self.renderer_context.get(
             self.LIST_FIELDS_SORT_KEY, {}
         )
-        self._validate_list_params()
-
-    def _validate_list_params(self):
-        if self.list_fields:
-            if any(not isinstance(name, str) for name in self.list_fields):
-                raise TypeError('The list_fields must be a list of strings, or empty')
-        if self.list_sort:
-            if self.list_fields and any(
-                name not in self.list_fields for name in self.list_sort.keys()
-            ):
-                raise KeyError(
-                    'The list_sort must be a dict where all the keys '
-                    'are in list_fields (if it is used)'
-                )
-            if any(val not in ['ascend', 'descend'] for val in self.list_sort.values()):
-                raise ValueError(
-                    'Every value in list_sort should be either "ascend" or "descend"'
-                )
 
     def _get_column_properties(
         self, field: SerializerType, name: str
@@ -293,8 +272,6 @@ class ColumnProcessor(ProcessingMixin):
                     ).get_schema()
                 )
             else:
-                if self.list_fields and data_index not in self.list_fields:
-                    continue
                 result.append(self._get_column_properties(field, name))
         return result
 
