@@ -1,3 +1,4 @@
+import pytest
 from rest_framework import serializers
 
 from drf_react_template.schema_form_encoder import (
@@ -45,3 +46,23 @@ def test_choice_custom_widget_and_type():
 
     result = UiSchemaProcessor(CustomWidgetSerializer(), {}).get_ui_schema()
     assert result['choice_text']['ui:widget'] == new_widget
+
+
+def test_question_list_sort():
+    order = 'ascend'
+
+    class QuestionListSortSerializer(QuestionListSerializer):
+        pub_date = serializers.DateField(style={'schema:sort': order})
+
+    result = ColumnProcessor(QuestionListSortSerializer(), {}).get_schema()
+    assert result[1]['defaultSortOrder'] == order
+
+
+def test_question_list_sort_bad_key():
+    order = 'BAD_KEY'
+
+    class QuestionListSortSerializer(QuestionListSerializer):
+        pub_date = serializers.DateField(style={'schema:sort': order})
+
+    with pytest.raises(ValueError):
+        ColumnProcessor(QuestionListSortSerializer(), {}).get_schema()
