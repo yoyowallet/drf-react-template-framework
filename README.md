@@ -117,6 +117,7 @@ The label can also be disabled completely via `style`:
 ```python
 choice_text = serializers.CharField(style={'ui:options': {'label': False}})
 ```
+Note: This does not work for `list` actions.
 
 ##### Read Only
 Setting `read_only=True` forces the encoder to skip it when building the form, 
@@ -131,12 +132,14 @@ Setting `required=False` removes frontend validation of the field:
 ```python
 choice_text = serializers.CharField(required=False)
 ```
+Note: This has no effect on `list` actions.
 
 ##### Allow Null
 Setting `allow_null=True` allows `null` values to be sent back in `formData`:
 ```python
 choice_text = serializers.CharField(allow_null=True)
 ```
+Note: This has no effect on `list` actions.
 
 ##### Default
 By setting a default value, a field is automatically set to `required=False`. 
@@ -144,6 +147,7 @@ The `formData` object will also contain the `default` value if it is not provide
 ```python
 choice_text = serializers.CharField(default='example text')
 ```
+Note: This has no effect on `list` actions.
 
 ##### Style
 The DRF `style` parameter is a `dict` and is therefore used for a number of different parameters. 
