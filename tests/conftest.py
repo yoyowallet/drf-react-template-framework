@@ -21,14 +21,13 @@ def polls_create_url(polls_list_url):
 
 
 @pytest.fixture
-def question_and_choice_context():
-    return {
-        ColumnProcessor.TYPE_MAP_OVERRIDES_KEY: {
-            'pub_date': {'type': 'string', 'widget': 'DatePickerWidget'},
-            'question_text': {'type': 'string', 'widget': 'textarea'},
-            'choices.choice_text': {'type': 'string', 'widget': 'textarea'},
-        }
-    }
+def question():
+    return factories.QuestionFactory(choice=choice)
+
+
+@pytest.fixture
+def choice(question):
+    return factories.ChoiceFactory(question=question)
 
 
 @pytest.fixture
@@ -83,13 +82,3 @@ def question_and_choice_list_expected_schema():
         },
         {'title': 'date published', 'dataIndex': 'pub_date', 'key': 'pub_date'},
     ]
-
-
-@pytest.fixture
-def question():
-    return factories.QuestionFactory(choice=choice)
-
-
-@pytest.fixture
-def choice(question):
-    return factories.ChoiceFactory(question=question)

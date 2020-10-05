@@ -1,5 +1,5 @@
 import re
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union
 
 from django.core.serializers.json import DjangoJSONEncoder
 from rest_framework import fields, serializers
@@ -13,7 +13,6 @@ SerializerType = Union[
 
 
 class ProcessingMixin:
-    TYPE_MAP_OVERRIDES_KEY = 'type_map_overrides'
     TYPE_MAP: Dict[str, Dict[str, str]] = {
         'CharField': {'type': 'string'},
         'IntegerField': {'type': 'integer', 'widget': 'updown'},
@@ -41,16 +40,17 @@ class ProcessingMixin:
             self.fields = self._filter_fields(serializer.get_fields().items())
         self.renderer_context = renderer_context
         self.prefix = prefix
-        self.type_map_overrides: Dict[str, Dict[str, str]] = self.renderer_context.get(
-            self.TYPE_MAP_OVERRIDES_KEY, {}
-        )
 
-    def _get_type_map_value(self, field: SerializerType, name: Optional[str] = None):
-        result = None
-        if name:
-            result = self.type_map_overrides.get(name)
-        if not result:
-            result = self.TYPE_MAP.get(type(field).__name__, {})
+    def _get_type_map_value(self, field: SerializerType):
+        result = {
+            'type': field.style.get('schema:type'),
+            'enum': field.style.get('schema:enum'),
+            'widget': field.style.get('ui:widget'),
+        }
+        result_default = self.TYPE_MAP.get(type(field).__name__, {})
+        for k, v in result_default.items():
+            if not result[k]:
+                result[k] = result_default[k]
         return result
 
     def _generate_data_index(self, name: str) -> str:
@@ -77,10 +77,7 @@ class ProcessingMixin:
     def _is_hidden_serializer(self) -> bool:
         return all(
             [
-                self._get_type_map_value(field, self._generate_data_index(name)).get(
-                    'widget'
-                )
-                == 'hidden'
+                self._get_type_map_value(field).get('widget') == 'hidden'
                 for name, field in self.fields
             ]
         )
@@ -117,8 +114,7 @@ class SchemaProcessor(ProcessingMixin):
 
     def _get_field_properties(self, field: SerializerType, name: str) -> Dict[str, Any]:
         result = {}
-        data_index = self._generate_data_index(name)
-        type_map_obj = self._get_type_map_value(field, data_index)
+        type_map_obj = self._get_type_map_value(field)
         result['type'] = type_map_obj['type']
         result['title'] = self._get_title(field, name)
         if isinstance(field, serializers.ListField):
@@ -197,21 +193,20 @@ class UiSchemaProcessor(ProcessingMixin):
             ).get_ui_schema()
         elif isinstance(field, serializers.ListField):
             child = field.child
-            widget = self._get_type_map_value(field=child, name=data_index).get(
-                'widget'
-            )
+            widget = self._get_type_map_value(field=child).get('widget')
             if not widget and isinstance(child, serializers.ChoiceField):
                 widget = 'checkbox'
         else:
-            widget = self._get_type_map_value(field=field, name=data_index).get(
-                'widget'
-            )
+            widget = self._get_type_map_value(field=field).get('widget')
         help_text = field.help_text
         if widget:
             result['ui:widget'] = widget
         if help_text:
             result['ui:help'] = help_text
-        result.update(field.style or {})
+        style_dict = {
+            k: v for k, v in (field.style or {}).items() if not k.startswith("schema:")
+        }
+        result.update(style_dict)
         return result
 
     def _get_all_ui_properties(self) -> Dict[str, Any]:
@@ -236,41 +231,6 @@ class UiSchemaProcessor(ProcessingMixin):
 
 
 class ColumnProcessor(ProcessingMixin):
-    LIST_FIELDS_KEY: str = 'list_fields'
-    LIST_FIELDS_SORT_KEY: str = 'list_fields_sort'
-
-    def __init__(
-        self,
-        serializer: SerializerType,
-        renderer_context: Dict[str, Any],
-        prefix: str = '',
-    ):
-        super(ColumnProcessor, self).__init__(serializer, renderer_context, prefix)
-        self.list_fields: List[str] = self.renderer_context.get(
-            self.LIST_FIELDS_KEY, []
-        )
-        self.list_sort: Dict[str, str] = self.renderer_context.get(
-            self.LIST_FIELDS_SORT_KEY, {}
-        )
-        self._validate_list_params()
-
-    def _validate_list_params(self):
-        if self.list_fields:
-            if any(not isinstance(name, str) for name in self.list_fields):
-                raise TypeError('The list_fields must be a list of strings, or empty')
-        if self.list_sort:
-            if self.list_fields and any(
-                name not in self.list_fields for name in self.list_sort.keys()
-            ):
-                raise KeyError(
-                    'The list_sort must be a dict where all the keys '
-                    'are in list_fields (if it is used)'
-                )
-            if any(val not in ['ascend', 'descend'] for val in self.list_sort.values()):
-                raise ValueError(
-                    'Every value in list_sort should be either "ascend" or "descend"'
-                )
-
     def _get_column_properties(
         self, field: SerializerType, name: str
     ) -> Dict[str, str]:
@@ -280,8 +240,12 @@ class ColumnProcessor(ProcessingMixin):
             'dataIndex': data_index,
             'key': name,
         }
-        sort_order = self.list_sort.get(data_index)
+        sort_order = field.style.get('schema:sort')
         if sort_order:
+            if sort_order not in ['ascend', 'descend']:
+                raise ValueError(
+                    f"The {data_index} field 'style['schema:sort']' value must be either 'ascend' or 'descend'"
+                )
             result['defaultSortOrder'] = sort_order
         return result
 
@@ -299,8 +263,6 @@ class ColumnProcessor(ProcessingMixin):
                     ).get_schema()
                 )
             else:
-                if self.list_fields and data_index not in self.list_fields:
-                    continue
                 result.append(self._get_column_properties(field, name))
         return result
 
