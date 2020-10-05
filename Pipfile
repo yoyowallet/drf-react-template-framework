@@ -6,11 +6,11 @@ verify_ssl = true
 [dev-packages]
 pre-commit = "*"
 pytest = "*"
-django-mock-queries = "*"
+pytest-django = "*"
+factory-boy = "*"
 
 [packages]
 djangorestframework = "==3.*"
-json-ext-encoder = "==0.2.0"
 
 [requires]
 python_version = "3.7"

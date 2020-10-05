@@ -1,7 +1,7 @@
 import re
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from json_ext_encoder import JSONEncoder
+from django.core.serializers.json import DjangoJSONEncoder
 from rest_framework import fields, serializers
 
 SerializerType = Union[
@@ -182,7 +182,9 @@ class SchemaProcessor(ProcessingMixin):
 
 class UiSchemaProcessor(ProcessingMixin):
     def _field_order(self) -> List[str]:
-        return self.serializer.Meta.fields
+        if self._is_list_serializer(self.serializer):
+            return list(self.serializer.child.Meta.fields)
+        return list(self.serializer.Meta.fields)
 
     def _get_ui_field_properties(
         self, field: SerializerType, name: str
@@ -303,7 +305,7 @@ class ColumnProcessor(ProcessingMixin):
         return result
 
 
-class SerializerEncoder(JSONEncoder):
+class SerializerEncoder(DjangoJSONEncoder):
     LIST_ACTION = 'list'
 
     def __init__(self, *args, **kwargs):
