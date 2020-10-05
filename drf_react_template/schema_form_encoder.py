@@ -202,7 +202,10 @@ class UiSchemaProcessor(ProcessingMixin):
             result['ui:widget'] = widget
         if help_text:
             result['ui:help'] = help_text
-        result.update(field.style or {})
+        style_dict = {
+            k: v for k, v in (field.style or {}).items() if not k.startswith("schema:")
+        }
+        result.update(style_dict)
         return result
 
     def _get_all_ui_properties(self) -> Dict[str, Any]:

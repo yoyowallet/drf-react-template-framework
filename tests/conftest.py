@@ -21,6 +21,16 @@ def polls_create_url(polls_list_url):
 
 
 @pytest.fixture
+def question():
+    return factories.QuestionFactory(choice=choice)
+
+
+@pytest.fixture
+def choice(question):
+    return factories.ChoiceFactory(question=question)
+
+
+@pytest.fixture
 def question_and_choice_retrieve_expected_schema():
     return {
         'title': 'Question',
@@ -72,13 +82,3 @@ def question_and_choice_list_expected_schema():
         },
         {'title': 'date published', 'dataIndex': 'pub_date', 'key': 'pub_date'},
     ]
-
-
-@pytest.fixture
-def question():
-    return factories.QuestionFactory(choice=choice)
-
-
-@pytest.fixture
-def choice(question):
-    return factories.ChoiceFactory(question=question)
