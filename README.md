@@ -99,6 +99,37 @@ Updates the form input title text. Can also be used to provide translations.
 ```python
 choice_text = serializers.CharField(label='What is the choice label?')
 ```
+The label can also be disabled completely via `style`:
+```python
+choice_text = serializers.CharField(style={'ui:options': {'label': False}})
+```
+
+#### Read Only
+Setting `read_only=True` forces the encoder to skip it when building the form, 
+but still means the value gets sent in the `formData`:
+```python
+choice_text = serializers.CharField(read_only=True)
+```
+This is useful for custom widgets which rely on data not related to the form (e.g. `id`).
+
+#### Required
+Setting `required=False` removes frontend validation of the field:
+```python
+choice_text = serializers.CharField(required=False)
+```
+
+#### Allow Null
+Setting `allow_null=True` allows `null` values to be sent back in `formData`:
+```python
+choice_text = serializers.CharField(allow_null=True)
+```
+
+#### Default
+By setting a default value, a field is automatically set to `required=False`. 
+The `formData` object will also contain the `default` value if it is not provided one.
+```python
+choice_text = serializers.CharField(default='example text')
+```
 
 #### Style
 The DRF `style` parameter is a `dict` and is therefore used for a number of different parameters. 
@@ -106,13 +137,46 @@ There are a [number of options](https://react-jsonschema-form.readthedocs.io/en/
 that `react-jsonschema-form` provides, many of which should work out-of-the-box, 
 although not all options will have been tested.
 
-Since style params are applied **last**, they can overwrite other keys. 
+Since style params are applied **last**, they can overwrite other keys. Additionally, any key not
+starting with `schema:` will be sent in the `json` payload, so this can be a good place to send
+additional attributes for custom widgets.
 
 The following are a list of valid (tested) keys and their uses. 
 
-##### Widget
+##### Widget, Type, and Enum
 While the framework tries to provide sensible defaults for DRF fields, 
 sometimes custom frontend widgets need to provide custom behaviour. 
 ```python
-choice_text = serializers.CharField(style={"ui:widget": "textarea"})
+choice_text = serializers.CharField(style={
+    'ui:widget': 'textarea',
+    'schema:type': 'string',
+    'schema:enum': 'choices'
+})
+```
+More information can be found on 
+[`types`](https://react-jsonschema-form.readthedocs.io/en/latest/usage/single/#field-types)
+and [`enum`](https://react-jsonschema-form.readthedocs.io/en/latest/usage/single/#enumerated-values).
+
+`enum` can also be set to the `string` `choices` (as in the example), 
+to try and use the `field.choices` attribute.
+
+##### Placeholder
+The HTML placeholder text can be updated in the following way:
+```python
+choice_text = serializers.CharField(style={'ui:placeholder': 'This a placeholder value'})
+```
+
+##### Text Area Widget Rows
+When the `ui:widget` is set to `textarea` (see above), the `rows` can be set via:
+```python
+choice_text = serializers.CharField(style={
+    'ui:widget': 'textarea',
+    'ui:options': {'rows': 8},
+})
+``` 
+
+##### Disabled
+An input field can be `disabled` in the following way:
+```python
+choice_text = serializers.CharField(style={'ui:disabled': 'true'})
 ```
