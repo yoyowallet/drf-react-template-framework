@@ -17,22 +17,22 @@ def polls_list_url():
 @pytest.fixture
 def choice_and_question_retrieve_expected_schema():
     return {
-        'title': 'Choice',
+        'title': 'Question',
         'type': 'object',
-        'required': ['choice_text'],
+        'required': ['question_text', 'pub_date'],
         'properties': {
-            'choice_text': {'type': 'string', 'title': 'Choice Text'},
-            'votes': {'type': 'integer', 'title': 'Votes', 'default': 0},
-            'questions': {
-                'title': 'Questions',
+            'question_text': {'type': 'string', 'title': 'Question Text'},
+            'pub_date': {'type': 'string', 'title': 'date published'},
+            'choices': {
+                'title': 'Choice',
                 'type': 'array',
                 'minItems': 0,
                 'items': {
                     'type': 'object',
-                    'required': ['question_text', 'pub_date'],
+                    'required': ['choice_text'],
                     'properties': {
-                        'question_text': {'type': 'string', 'title': 'Question Text'},
-                        'pub_date': {'type': 'string', 'title': 'date published'},
+                        'choice_text': {'type': 'string', 'title': 'Choice Text'},
+                        'votes': {'type': 'integer', 'title': 'Votes', 'default': 0},
                     },
                 },
             },
@@ -43,14 +43,14 @@ def choice_and_question_retrieve_expected_schema():
 @pytest.fixture
 def choice_and_question_retrieve_expected_ui_schema():
     return {
-        'ui:order': ('choice_text', 'votes', 'questions'),
-        'choice_text': {},
-        'votes': {'ui:widget': 'updown'},
-        'questions': {
+        'ui:order': ('question_text', 'pub_date', 'choices'),
+        'question_text': {},
+        'pub_date': {'ui:widget': 'date'},
+        'choices': {
             'items': {
-                'ui:order': ('question_text', 'pub_date'),
-                'question_text': {},
-                'pub_date': {'ui:widget': 'date'},
+                'ui:order': ('choice_text', 'votes'),
+                'choice_text': {},
+                'votes': {'ui:widget': 'updown'},
             }
         },
     }

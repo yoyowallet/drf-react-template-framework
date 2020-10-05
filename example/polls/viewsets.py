@@ -21,7 +21,7 @@ class PollViewSet(
     def get_serializer_class(self):
         if self.action == 'list':
             return serializers.QuestionListSerializer
-        return serializers.ChoiceSerializer
+        return serializers.QuestionSerializer
 
     def get_object(self):
         return get_object_or_404(
