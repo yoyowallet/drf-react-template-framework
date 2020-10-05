@@ -21,17 +21,6 @@ def polls_create_url(polls_list_url):
 
 
 @pytest.fixture
-def question_and_choice_context():
-    return {
-        ColumnProcessor.TYPE_MAP_OVERRIDES_KEY: {
-            'pub_date': {'type': 'string', 'widget': 'DatePickerWidget'},
-            'question_text': {'type': 'string', 'widget': 'textarea'},
-            'choices.choice_text': {'type': 'string', 'widget': 'textarea'},
-        }
-    }
-
-
-@pytest.fixture
 def question_and_choice_retrieve_expected_schema():
     return {
         'title': 'Question',

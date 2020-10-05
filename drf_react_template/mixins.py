@@ -13,13 +13,10 @@ class FormSchemaViewSetMixin(GenericViewSet):
     list_fields = []
     list_sort = {}
 
-    type_map_overrides = {}
-
     def get_renderer_context(self):
         context = super().get_renderer_context()
         context[ColumnProcessor.LIST_FIELDS_KEY] = self.list_fields
         context[ColumnProcessor.LIST_FIELDS_SORT_KEY] = self.list_sort
-        context[ProcessingMixin.TYPE_MAP_OVERRIDES_KEY] = self.type_map_overrides
         return context
 
     def finalize_response(self, request, response, *args, **kwargs):

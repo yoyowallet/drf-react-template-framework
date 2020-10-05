@@ -13,7 +13,6 @@ SerializerType = Union[
 
 
 class ProcessingMixin:
-    TYPE_MAP_OVERRIDES_KEY = 'type_map_overrides'
     TYPE_MAP: Dict[str, Dict[str, str]] = {
         'CharField': {'type': 'string'},
         'IntegerField': {'type': 'integer', 'widget': 'updown'},
@@ -41,16 +40,16 @@ class ProcessingMixin:
             self.fields = self._filter_fields(serializer.get_fields().items())
         self.renderer_context = renderer_context
         self.prefix = prefix
-        self.type_map_overrides: Dict[str, Dict[str, str]] = self.renderer_context.get(
-            self.TYPE_MAP_OVERRIDES_KEY, {}
-        )
 
-    def _get_type_map_value(self, field: SerializerType, name: Optional[str] = None):
-        result = None
-        if name:
-            result = self.type_map_overrides.get(name)
-        if not result:
-            result = self.TYPE_MAP.get(type(field).__name__, {})
+    def _get_type_map_value(self, field: SerializerType):
+        result = {
+            'type': field.style.get('schema:type'),
+            'widget': field.style.get('ui:widget'),
+        }
+        result_default = self.TYPE_MAP.get(type(field).__name__, {})
+        for k, v in result_default.items():
+            if not result[k]:
+                result[k] = result_default[k]
         return result
 
     def _generate_data_index(self, name: str) -> str:
@@ -77,10 +76,7 @@ class ProcessingMixin:
     def _is_hidden_serializer(self) -> bool:
         return all(
             [
-                self._get_type_map_value(field, self._generate_data_index(name)).get(
-                    'widget'
-                )
-                == 'hidden'
+                self._get_type_map_value(field).get('widget') == 'hidden'
                 for name, field in self.fields
             ]
         )
@@ -117,8 +113,7 @@ class SchemaProcessor(ProcessingMixin):
 
     def _get_field_properties(self, field: SerializerType, name: str) -> Dict[str, Any]:
         result = {}
-        data_index = self._generate_data_index(name)
-        type_map_obj = self._get_type_map_value(field, data_index)
+        type_map_obj = self._get_type_map_value(field)
         result['type'] = type_map_obj['type']
         result['title'] = self._get_title(field, name)
         if isinstance(field, serializers.ListField):
@@ -197,15 +192,11 @@ class UiSchemaProcessor(ProcessingMixin):
             ).get_ui_schema()
         elif isinstance(field, serializers.ListField):
             child = field.child
-            widget = self._get_type_map_value(field=child, name=data_index).get(
-                'widget'
-            )
+            widget = self._get_type_map_value(field=child).get('widget')
             if not widget and isinstance(child, serializers.ChoiceField):
                 widget = 'checkbox'
         else:
-            widget = self._get_type_map_value(field=field, name=data_index).get(
-                'widget'
-            )
+            widget = self._get_type_map_value(field=field).get('widget')
         help_text = field.help_text
         if widget:
             result['ui:widget'] = widget
