@@ -44,6 +44,7 @@ class ProcessingMixin:
     def _get_type_map_value(self, field: SerializerType):
         result = {
             'type': field.style.get('schema:type'),
+            'enum': field.style.get('schema:enum'),
             'widget': field.style.get('ui:widget'),
         }
         result_default = self.TYPE_MAP.get(type(field).__name__, {})
