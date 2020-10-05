@@ -15,7 +15,7 @@ def polls_list_url():
 
 
 @pytest.fixture
-def choice_and_question_retrieve_expected_schema():
+def question_and_choice_retrieve_expected_schema():
     return {
         'title': 'Question',
         'type': 'object',
@@ -41,7 +41,7 @@ def choice_and_question_retrieve_expected_schema():
 
 
 @pytest.fixture
-def choice_and_question_retrieve_expected_ui_schema():
+def question_and_choice_retrieve_expected_ui_schema():
     return {
         'ui:order': ('question_text', 'pub_date', 'choices'),
         'question_text': {},
@@ -57,7 +57,7 @@ def choice_and_question_retrieve_expected_ui_schema():
 
 
 @pytest.fixture
-def choice_and_question_list_expected_schema():
+def question_and_choice_list_expected_schema():
     return [
         {
             'title': 'Question Text',
