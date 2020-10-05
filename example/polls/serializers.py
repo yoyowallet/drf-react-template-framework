@@ -10,7 +10,7 @@ class QuestionListSerializer(serializers.Serializer):
 
 
 class ChoiceSerializer(serializers.Serializer):
-    choice_text = serializers.CharField()
+    choice_text = serializers.CharField(style={'ui:widget': 'textarea'})
     votes = serializers.IntegerField(default=0)
 
     class Meta:
@@ -18,8 +18,10 @@ class ChoiceSerializer(serializers.Serializer):
 
 
 class QuestionSerializer(serializers.Serializer):
-    question_text = serializers.CharField()
-    pub_date = serializers.DateField(label='date published')
+    question_text = serializers.CharField(style={'ui:widget': 'textarea'})
+    pub_date = serializers.DateField(
+        label='date published', style={'ui:widget': 'DatePickerWidget'}
+    )
     choices = ChoiceSerializer(many=True)
 
     class Meta:
