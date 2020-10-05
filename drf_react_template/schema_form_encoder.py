@@ -230,20 +230,6 @@ class UiSchemaProcessor(ProcessingMixin):
 
 
 class ColumnProcessor(ProcessingMixin):
-    LIST_FIELDS_KEY: str = 'list_fields'
-    LIST_FIELDS_SORT_KEY: str = 'list_fields_sort'
-
-    def __init__(
-        self,
-        serializer: SerializerType,
-        renderer_context: Dict[str, Any],
-        prefix: str = '',
-    ):
-        super(ColumnProcessor, self).__init__(serializer, renderer_context, prefix)
-        self.list_sort: Dict[str, str] = self.renderer_context.get(
-            self.LIST_FIELDS_SORT_KEY, {}
-        )
-
     def _get_column_properties(
         self, field: SerializerType, name: str
     ) -> Dict[str, str]:
@@ -253,8 +239,12 @@ class ColumnProcessor(ProcessingMixin):
             'dataIndex': data_index,
             'key': name,
         }
-        sort_order = self.list_sort.get(data_index)
+        sort_order = field.style.get('schema:sort')
         if sort_order:
+            if sort_order not in ['ascend', 'descend']:
+                raise ValueError(
+                    f"The {data_index} field 'style['schema:sort']' value must be either 'ascend' or 'descend'"
+                )
             result['defaultSortOrder'] = sort_order
         return result
 
