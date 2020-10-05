@@ -91,10 +91,24 @@ the `serializer_list_class` class attribute provided by `FormSchemaViewSetMixin`
 The majority of the customization will occur inside serializer classes; 
 a real world example will often require custom `create`, `update`, `to_representation`, etc methods. 
 
+At the class level the serializer defines the form name:
+```
+ChoiceSerializer -> Choice
+QuestionAndChoiceSerializer -> Question And Choice
+Choice -> Choice
+```
+If a title isn't required (e.g. for a nested form), then the `__init__` method can be updated:
+```python
+def __init__(self, **kwargs):
+    super().__init__(label='', **kwargs)
+```
+
+#### Serializer Field Attributes
+
 The following is a list of parameters that can be added to individual fields which modifies 
 `react-jsonschema-form` functionality on the front-end.
 
-#### Label
+##### Label
 Updates the form input title text. Can also be used to provide translations.
 ```python
 choice_text = serializers.CharField(label='What is the choice label?')
@@ -104,7 +118,7 @@ The label can also be disabled completely via `style`:
 choice_text = serializers.CharField(style={'ui:options': {'label': False}})
 ```
 
-#### Read Only
+##### Read Only
 Setting `read_only=True` forces the encoder to skip it when building the form, 
 but still means the value gets sent in the `formData`:
 ```python
@@ -112,26 +126,26 @@ choice_text = serializers.CharField(read_only=True)
 ```
 This is useful for custom widgets which rely on data not related to the form (e.g. `id`).
 
-#### Required
+##### Required
 Setting `required=False` removes frontend validation of the field:
 ```python
 choice_text = serializers.CharField(required=False)
 ```
 
-#### Allow Null
+##### Allow Null
 Setting `allow_null=True` allows `null` values to be sent back in `formData`:
 ```python
 choice_text = serializers.CharField(allow_null=True)
 ```
 
-#### Default
+##### Default
 By setting a default value, a field is automatically set to `required=False`. 
 The `formData` object will also contain the `default` value if it is not provided one.
 ```python
 choice_text = serializers.CharField(default='example text')
 ```
 
-#### Style
+##### Style
 The DRF `style` parameter is a `dict` and is therefore used for a number of different parameters. 
 There are a [number of options](https://react-jsonschema-form.readthedocs.io/en/latest/api-reference/uiSchema/) 
 that `react-jsonschema-form` provides, many of which should work out-of-the-box, 
@@ -143,7 +157,7 @@ additional attributes for custom widgets.
 
 The following are a list of valid (tested) keys and their uses. 
 
-##### Widget, Type, and Enum
+###### Widget, Type, and Enum
 While the framework tries to provide sensible defaults for DRF fields, 
 sometimes custom frontend widgets need to provide custom behaviour. 
 ```python
@@ -160,13 +174,13 @@ and [`enum`](https://react-jsonschema-form.readthedocs.io/en/latest/usage/single
 `enum` can also be set to the `string` `choices` (as in the example), 
 to try and use the `field.choices` attribute.
 
-##### Placeholder
+###### Placeholder
 The HTML placeholder text can be updated in the following way:
 ```python
 choice_text = serializers.CharField(style={'ui:placeholder': 'This a placeholder value'})
 ```
 
-##### Text Area Widget Rows
+###### Text Area Widget Rows
 When the `ui:widget` is set to `textarea` (see above), the `rows` can be set via:
 ```python
 choice_text = serializers.CharField(style={
@@ -175,7 +189,7 @@ choice_text = serializers.CharField(style={
 })
 ``` 
 
-##### Disabled
+###### Disabled
 An input field can be `disabled` in the following way:
 ```python
 choice_text = serializers.CharField(style={'ui:disabled': 'true'})
