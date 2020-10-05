@@ -14,7 +14,7 @@ class FormSchemaViewSetMixin(GenericViewSet):
     list_sort = {}
 
     def get_serializer_class(self):
-        if self.action == 'list':
+        if self.action == 'list' and self.serializer_list_class:
             return self.serializer_list_class
         return self.serializer_class
 
