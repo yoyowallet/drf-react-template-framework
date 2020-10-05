@@ -25,7 +25,6 @@ class ChoiceSerializer(serializers.ModelSerializer):
 ```python
 from rest_framework.mixins import RetrieveModelMixin
 from drf_react_template.mixins import FormSchemaViewSetMixin
-from example.polls import models, serializers
 
 class ChoiceViewSet(
     RetrieveModelMixin,
@@ -41,3 +40,75 @@ Inside the `serializer` object, two fields `schema` and `uiSchema` contain the o
 can be used inside [`react-jsonschema-form`](https://react-jsonschema-form.readthedocs.io/en/latest/#usage).
 
 ## Documentation
+
+While the above quick start is useful for super simple cases,
+the framework has a large number of additional parameters which can be used to customize behaviour.
+
+### Viewset
+
+All viewsets must inherit from `drf_react_template.mixins.FormSchemaViewSetMixin`. 
+This class inherits from the 
+DRF [`GenericViewSet`](https://www.django-rest-framework.org/api-guide/viewsets/#genericviewset), 
+while additionally providing custom `finialize response functionality` and the additional endpoint:
+```
+GET */create/
+>> {'serializer': ..., 'formData': {}}
+```
+Which can be used to generate an empty form for create. 
+
+The only other specific customization that can be applied in the viewset is different 
+serializers for different endpoints. For example, `update` actions often show a subset of fields;
+as such it is possible to override `get_serializer_class` to return the specific form required. 
+
+For example:
+```python
+# serializers.py
+class ChoiceSerializer(serializers.ModelSerializer):
+    choice_text = serializers.CharField()
+    votes = serializers.IntegerField()
+
+    class Meta:
+        fields = ('choice_text', 'votes')
+
+class ChoiceUpdateSerializer(serializers.ModelSerializer):
+    choice_text = serializers.CharField()
+
+    class Meta:
+        fields = ('choice_text',)
+
+# viewsets.py
+def get_serializer_class(self):
+    if self.action == 'update':
+        return ChoiceUpdateSerializer
+    return ChoiceSerializer
+```
+
+### Serializer
+
+The majority of the customization will occur inside serializer classes; 
+a real world example will often require custom `create`, `update`, `to_representation`, etc methods. 
+The following is a list of parameters that can be added to individual fields which modifies 
+`react-jsonschema-form` functionality on the front-end.
+
+#### Label
+Updates the form input title text. Can also be used to provide translations.
+```python
+choice_text = serializers.CharField(label='What is the choice label?')
+```
+
+#### Style
+The DRF `style` parameter is a `dict` and is therefore used for a number of different parameters. 
+There are a [number of options](https://react-jsonschema-form.readthedocs.io/en/latest/api-reference/uiSchema/) 
+that `react-jsonschema-form` provides, many of which should work out-of-the-box, 
+although not all options will have been tested.
+
+Since style params are applied **last**, they can overwrite other keys. 
+
+The following are a list of valid (tested) keys and their uses. 
+
+##### Widget
+While the framework tries to provide sensible defaults for DRF fields, 
+sometimes custom frontend widgets need to provide custom behaviour. 
+```python
+choice_text = serializers.CharField(style={"ui:widget": "textarea"})
+```
