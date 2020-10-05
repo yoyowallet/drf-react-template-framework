@@ -183,8 +183,8 @@ class SchemaProcessor(ProcessingMixin):
 class UiSchemaProcessor(ProcessingMixin):
     def _field_order(self) -> List[str]:
         if self._is_list_serializer(self.serializer):
-            return self.serializer.child.Meta.fields
-        return self.serializer.Meta.fields
+            return list(self.serializer.child.Meta.fields)
+        return list(self.serializer.Meta.fields)
 
     def _get_ui_field_properties(
         self, field: SerializerType, name: str

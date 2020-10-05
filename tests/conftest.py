@@ -1,6 +1,7 @@
 import pytest
 from rest_framework.test import APIClient
 
+from drf_react_template.schema_form_encoder import ColumnProcessor
 from tests import factories
 
 
@@ -12,6 +13,22 @@ def api_client():
 @pytest.fixture
 def polls_list_url():
     return '/polls/'
+
+
+@pytest.fixture
+def polls_create_url(polls_list_url):
+    return '/polls/create/'
+
+
+@pytest.fixture
+def question_and_choice_context():
+    return {
+        ColumnProcessor.TYPE_MAP_OVERRIDES_KEY: {
+            'pub_date': {'type': 'string', 'widget': 'DatePickerWidget'},
+            'question_text': {'type': 'string', 'widget': 'textarea'},
+            'choices.choice_text': {'type': 'string', 'widget': 'textarea'},
+        }
+    }
 
 
 @pytest.fixture
@@ -43,13 +60,13 @@ def question_and_choice_retrieve_expected_schema():
 @pytest.fixture
 def question_and_choice_retrieve_expected_ui_schema():
     return {
-        'ui:order': ('question_text', 'pub_date', 'choices'),
-        'question_text': {},
-        'pub_date': {'ui:widget': 'date'},
+        'ui:order': ['question_text', 'pub_date', 'choices'],
+        'question_text': {'ui:widget': 'textarea'},
+        'pub_date': {'ui:widget': 'DatePickerWidget'},
         'choices': {
             'items': {
-                'ui:order': ('choice_text', 'votes'),
-                'choice_text': {},
+                'ui:order': ['choice_text', 'votes'],
+                'choice_text': {'ui:widget': 'textarea'},
                 'votes': {'ui:widget': 'updown'},
             }
         },
