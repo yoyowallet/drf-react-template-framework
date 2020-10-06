@@ -4,9 +4,25 @@ version = "0.0.1"
 description = "Django REST Framework plugin that creates form schemas for react-jsonschema-form"
 authors = ["stuart.bradley <stuy.bradley@gmail.com>"]
 license = "MIT"
+readme = "README.md"
+homepage = "https://github.com/yoyowallet/drf-react-template-framework"
+repository = "https://github.com/yoyowallet/drf-react-template-framework"
+keywords = ["drf", "react"]
+classifiers = [
+    'Development Status :: 3 - Alpha',
+    'Programming Language :: Python :: 3',
+    'License :: OSI Approved :: MIT License',
+    'Operating System :: OS Independent',
+    'Intended Audience :: Developers',
+    'Topic :: Software Development :: Libraries',
+    'Framework :: Django',
+]
+include = [
+    "LICENSE",
+]
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = "^3.6.1"
 djangorestframework = ">=3.0.0,<4.0.0"
 
 [tool.poetry.dev-dependencies]
@@ -17,7 +33,7 @@ factory-boy = "^3.1.0"
 pytest-cov = "^2.10.1"
 
 [tool.black]
-target-version = ['py37']
+target-version = ['py36']
 include = '\.pyi?$'
 skip-string-normalization = true
 exclude = '''

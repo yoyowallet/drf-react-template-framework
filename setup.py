@@ -1,31 +1,31 @@
+#!/usr/bin/env python
+
+import sys
+
 import setuptools
 
-with open('README.md', 'r') as fh:
-    long_description = fh.read()
+CURRENT_PYTHON = sys.version_info[:2]
+REQUIRED_PYTHON = (3, 6)
 
-setuptools.setup(
-    name='drf-react-template-framework',
-    version='0.0.3',
-    description='Django REST Framework plugin that creates form schemas for react-jsonschema-form',
-    long_description=long_description,
-    long_description_content_type="text/markdown",
-    url='https://github.com/yoyowallet/drf-react-template-framework',
-    author='Stuart Bradley',
-    author_email='stuart@yoyowallet.com',
-    license='MIT',
-    classifiers=[
-        'Development Status :: 3 - Alpha',
-        'Programming Language :: Python :: 3',
-        'License :: OSI Approved :: MIT License',
-        'Operating System :: OS Independent',
-        'Intended Audience :: Developers',
-        'Topic :: Software Development :: Libraries',
-        'Framework :: Django',
-    ],
-    keywords='drf react',
-    packages=setuptools.find_packages(
-        include=['drf_react_template', 'drf_react_template.*']
-    ),
-    install_requires=['djangorestframework>=3.0.0,<4.0.0'],
-    python_requires='>=3.7',
-)
+if __name__ == "__main__":
+    # This check and everything above must remain compatible with Python 2.7.
+    if CURRENT_PYTHON < REQUIRED_PYTHON:
+        sys.stderr.write(
+            """
+    ==========================
+    Unsupported Python version
+    ==========================
+    This version of DRF Integrations Framework requires Python {}.{}, but you're trying
+    to install it on Python {}.{}.
+    This may be because you are using a version of pip that doesn't
+    understand the python_requires classifier. Make sure you
+    have pip >= 9.0 and setuptools >= 24.2, then try again.
+    This will install the latest version of DRF Integrations Framework which works on
+    your version of Python.
+    """.format(
+                *(REQUIRED_PYTHON + CURRENT_PYTHON)
+            )
+        )
+        sys.exit(1)
+
+    setuptools.setup()
