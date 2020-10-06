@@ -244,7 +244,8 @@ class ColumnProcessor(ProcessingMixin):
         if sort_order:
             if sort_order not in ['ascend', 'descend']:
                 raise ValueError(
-                    f"The {data_index} field 'style['schema:sort']' value must be either 'ascend' or 'descend'"
+                    f"The {data_index} field 'style['schema:sort']' "
+                    f"value must be either 'ascend' or 'descend'"
                 )
             result['defaultSortOrder'] = sort_order
         return result
