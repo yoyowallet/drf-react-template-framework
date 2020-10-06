@@ -20,6 +20,9 @@ classifiers = [
 include = [
     "LICENSE",
 ]
+packages = [
+    { include="drf_react_template" },
+]
 
 [tool.poetry.dependencies]
 python = "^3.6.1"
