@@ -114,6 +114,17 @@ def test_allow_null():
     assert 'null' in result['properties']['choice_text']['type']
 
 
+def test_default():
+    new_default = 'default'
+
+    class DefaultSerializer(ChoiceSerializer):
+        choice_text = serializers.CharField(default=new_default)
+
+    result = SchemaProcessor(DefaultSerializer(), {}).get_schema()
+    assert result['properties']['choice_text']['default'] == new_default
+    assert 'choice_text' not in result['required']
+
+
 def test_choice_custom_widget_and_type():
     new_widget = 'CustomWidget'
     new_type = 'CustomType'
@@ -128,6 +139,41 @@ def test_choice_custom_widget_and_type():
 
     result = UiSchemaProcessor(CustomWidgetSerializer(), {}).get_ui_schema()
     assert result['choice_text']['ui:widget'] == new_widget
+
+
+def test_choice_placeholder():
+    new_placeholder = 'new_placeholder'
+
+    class PlaceholderSerializer(ChoiceSerializer):
+        choice_text = serializers.CharField(style={'ui:placeholder': new_placeholder})
+
+    result = UiSchemaProcessor(PlaceholderSerializer(), {}).get_ui_schema()
+    assert result['choice_text']['ui:placeholder'] == new_placeholder
+
+
+def test_choice_text_area_rows():
+    widget = 'textarea'
+    ui_options = {'rows': 8}
+
+    class TextAreaWidgetSerializer(ChoiceSerializer):
+        choice_text = serializers.CharField(
+            style={
+                'ui:widget': widget,
+                'ui:options': ui_options,
+            }
+        )
+
+    result = UiSchemaProcessor(TextAreaWidgetSerializer(), {}).get_ui_schema()
+    assert result['choice_text']['ui:widget'] == widget
+    assert result['choice_text']['ui:options'] == ui_options
+
+
+def test_choice_disabled():
+    class DisabledSerializer(ChoiceSerializer):
+        choice_text = serializers.CharField(style={'ui:disabled': 'true'})
+
+    result = UiSchemaProcessor(DisabledSerializer(), {}).get_ui_schema()
+    assert result['choice_text']['ui:disabled'] == 'true'
 
 
 def test_question_list_sort():
