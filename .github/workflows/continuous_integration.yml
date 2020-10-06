@@ -31,4 +31,4 @@ jobs:
       uses: pre-commit/action@v2.0.0
     - name: Test with pytest
       run: |
-        pipenv run pytest
+        poetry run pytest --cov
