@@ -5,7 +5,7 @@ with open('README.md', 'r') as fh:
 
 setuptools.setup(
     name='drf-react-template-framework',
-    version='0.0.1',
+    version='0.0.3',
     description='Django REST Framework plugin that creates form schemas for react-jsonschema-form',
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -26,6 +26,6 @@ setuptools.setup(
     packages=setuptools.find_packages(
         include=['drf_react_template', 'drf_react_template.*']
     ),
-    install_requires=['djangorestframework>=3.12'],
+    install_requires=['djangorestframework>=3.0.0,<4.0.0'],
     python_requires='>=3.7',
 )
