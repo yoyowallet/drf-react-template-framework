@@ -1,7 +1,6 @@
 import pytest
 from rest_framework.test import APIClient
 
-from drf_react_template.schema_form_encoder import ColumnProcessor
 from tests import factories
 
 
