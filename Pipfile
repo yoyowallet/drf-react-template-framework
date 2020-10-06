@@ -10,7 +10,7 @@ pytest-django = "*"
 factory-boy = "*"
 
 [packages]
-djangorestframework = "==3.*"
+djangorestframework = "==3.12.*"
 
 [requires]
 python_version = "3.7"
