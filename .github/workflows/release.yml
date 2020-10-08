@@ -27,9 +27,8 @@ jobs:
       - name: Install Dependencies
         run: poetry install
         if: steps.cache.outputs.cache-hit != 'true'
-      - name: Publish
-        env:
-          PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
-        run: |
-          poetry config pypi-token.pypi $PYPI_TOKEN
-          bash scripts/publish.sh
+      - name: Build and publish
+        uses: d1618033/gh-action-python-publish-using-poetry@v1.1
+        with:
+          pypi_username: '__token__'
+          pypi_password: ${{ secrets.PYPI_TOKEN }}
