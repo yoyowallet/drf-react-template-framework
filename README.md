@@ -160,7 +160,13 @@ Since style params are applied **last**, they can overwrite other keys. Addition
 starting with `schema:` will be sent in the `json` payload, so this can be a good place to send
 additional attributes for custom widgets.
 
-The following are a list of valid (tested) keys and their uses. 
+The following are a list of valid (tested) keys and their uses.
+
+###### List Sort Order
+Sends the `defaultSortOrder` key with the `list` action serializer:
+```python
+choice_text = serializers.CharField(, style={'schema:sort': 'ascend'})
+```
 
 ###### Widget, Type, and Enum
 While the framework tries to provide sensible defaults for DRF fields, 
