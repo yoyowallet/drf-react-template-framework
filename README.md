@@ -162,16 +162,35 @@ additional attributes for custom widgets.
 
 The following are a list of valid (tested) keys and their uses.
 
+###### Dependencies
+
+`react-jsonschema-form` allows for the use of [dependencies](https://react-jsonschema-form.readthedocs.io/en/latest/usage/dependencies/#dependencies) 
+between multiple fields. This library has analogues for the first three types (bidirectional, unidirectional, 
+and conditional). Dynamic dependencies can be created via the overrides described below.
+```python
+# Unidirectional
+choice_text = serializers.CharField(
+    style={'schema:dependencies:simple': ['votes']}
+)
+
+# Bidirectional - note the different value styles, either is fine.
+choice_text = serializers.CharField(
+    style={'schema:dependencies:simple': ['votes']}
+)
+votes = serializers.IntegerField(
+    default=0, style={'schema:dependencies:simple': 'choice_text'}
+)
+
+# Conditional
+choice_text = serializers.CharField(
+    style={'schema:dependencies:conditional': ['votes']}
+)
+```
+
 ###### Field Overrides 
 
 Since this framework doesn't cover 100% of the features of the `react-jsonschema-form`, it is possible to provide 
 `dict` objects which override the individual field properties:
-```python
-
-```
-
-###### List Sort Order
-Sends the `defaultSortOrder` key with the `list` action serializer:
 ```python
 choice_text = serializers.CharField(
     style={
@@ -181,12 +200,19 @@ choice_text = serializers.CharField(
             'title': 'Overridden title',
             'dataIndex': 'question_text',
             'key': 'question_text',
-        }
+        },
+        'schema:dependencies:override': ['votes']
     }
 )
 ```
 **Note**: There is no validation around these overrides, so it is left up to the developer to ensure the resulting
 schema is valid.
+
+###### List Sort Order
+Sends the `defaultSortOrder` key with the `list` action serializer:
+```python
+choice_text = serializers.CharField(, style={'schema:sort': 'ascend'})
+```
 
 ###### Widget, Type, and Enum
 While the framework tries to provide sensible defaults for DRF fields, 
