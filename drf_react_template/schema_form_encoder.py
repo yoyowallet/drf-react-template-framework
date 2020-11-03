@@ -65,10 +65,6 @@ class ProcessingMixin:
     def _generate_data_index(self, name: str) -> str:
         return f'{self.prefix}.{name}' if self.prefix else name
 
-    @staticmethod
-    def _get_style_dict(field):
-        return field.style or {}
-
     def _get_title(self, field: SerializerType, name: str) -> str:
         result = field.label
         if result is None:
@@ -165,7 +161,7 @@ class SchemaProcessor(ProcessingMixin):
                     field, self.renderer_context, prefix=self._generate_data_index(name)
                 ).get_schema()
             else:
-                override = self._get_style_dict(field).get(SCHEMA_OVERRIDE_KEY)
+                override = field.style.get(SCHEMA_OVERRIDE_KEY)
                 result[name] = override or self._get_field_properties(field, name)
         return result
 
@@ -224,13 +220,13 @@ class UiSchemaProcessor(ProcessingMixin):
             result['ui:widget'] = widget
         if help_text:
             result['ui:help'] = help_text
-        result.update(self._get_style_dict(field))
+        result.update(field.style)
         return result
 
     def _get_all_ui_properties(self) -> Dict[str, Any]:
         result = {}
         for name, field in self.fields:
-            override = self._get_style_dict(field).get(UI_SCHEMA_OVERRIDE_KEY)
+            override = field.style.get(UI_SCHEMA_OVERRIDE_KEY)
             result[name] = override or self._get_ui_field_properties(field, name)
         return result
 
@@ -283,9 +279,7 @@ class ColumnProcessor(ProcessingMixin):
                     ).get_schema()
                 )
             else:
-                override = self._get_style_dict(field).get(
-                    COLUMN_PROCESSOR_OVERRIDE_KEY
-                )
+                override = field.style.get(COLUMN_PROCESSOR_OVERRIDE_KEY)
                 result.append(override or self._get_column_properties(field, name))
         return result
 
