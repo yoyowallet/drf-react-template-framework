@@ -183,7 +183,6 @@ class SchemaProcessor(ProcessingMixin):
                 dependencies[name] = dependent_properties
 
                 for field_name in dependent_properties:
-                    print(field_name, schema)
                     if self._is_list_serializer(self.serializer):
                         with suppress(ValueError):
                             schema['items']['required'].remove(field_name)
@@ -192,6 +191,7 @@ class SchemaProcessor(ProcessingMixin):
                         with suppress(ValueError):
                             schema['required'].remove(field_name)
                         del schema['properties'][field_name]
+
         if dependencies:
             schema['dependencies'] = dependencies
         return schema
