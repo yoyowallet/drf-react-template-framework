@@ -162,11 +162,31 @@ additional attributes for custom widgets.
 
 The following are a list of valid (tested) keys and their uses.
 
+###### Field Overrides 
+
+Since this framework doesn't cover 100% of the features of the `react-jsonschema-form`, it is possible to provide 
+`dict` objects which override the individual field properties:
+```python
+
+```
+
 ###### List Sort Order
 Sends the `defaultSortOrder` key with the `list` action serializer:
 ```python
-choice_text = serializers.CharField(, style={'schema:sort': 'ascend'})
+choice_text = serializers.CharField(
+    style={
+        'schema:override': {'type': 'string', 'title': 'Overridden title'},
+        'uiSchema:override': {'ui:widget': 'updown'},
+        'column:override': {
+            'title': 'Overridden title',
+            'dataIndex': 'question_text',
+            'key': 'question_text',
+        }
+    }
+)
 ```
+**Note**: There is no validation around these overrides, so it is left up to the developer to ensure the resulting
+schema is valid.
 
 ###### Widget, Type, and Enum
 While the framework tries to provide sensible defaults for DRF fields, 

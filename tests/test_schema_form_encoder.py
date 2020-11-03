@@ -2,6 +2,9 @@ import pytest
 from rest_framework import serializers
 
 from drf_react_template.schema_form_encoder import (
+    COLUMN_PROCESSOR_OVERRIDE_KEY,
+    SCHEMA_OVERRIDE_KEY,
+    UI_SCHEMA_OVERRIDE_KEY,
     ColumnProcessor,
     SchemaProcessor,
     UiSchemaProcessor,
@@ -193,4 +196,45 @@ def test_question_list_sort_bad_key():
         pub_date = serializers.DateField(style={'schema:sort': order})
 
     with pytest.raises(ValueError):
+
         ColumnProcessor(QuestionListSortSerializer(), {}).get_schema()
+
+
+def test_choice_schema_override():
+    title_override = 'Override'
+
+    class SchemaOverrideSerializer(ChoiceSerializer):
+        choice_text = serializers.CharField(
+            style={SCHEMA_OVERRIDE_KEY: {'type': 'string', 'title': title_override}}
+        )
+
+    result = SchemaProcessor(SchemaOverrideSerializer(), {}).get_schema()
+    assert result['properties']['choice_text']['title'] == title_override
+
+
+def test_choice_ui_schema_override():
+    ui_override = {'ui:widget': 'updown'}
+
+    class UiSchemaOverrideSerializer(ChoiceSerializer):
+        choice_text = serializers.CharField(style={UI_SCHEMA_OVERRIDE_KEY: ui_override})
+
+    result = UiSchemaProcessor(UiSchemaOverrideSerializer(), {}).get_ui_schema()
+    assert result['choice_text'] == ui_override
+
+
+def test_question_and_choice_list_override():
+    title_override = 'Override'
+
+    class ListOverrideSerializer(QuestionListSerializer):
+        question_text = serializers.CharField(
+            style={
+                COLUMN_PROCESSOR_OVERRIDE_KEY: {
+                    'title': title_override,
+                    'dataIndex': 'question_text',
+                    'key': 'question_text',
+                }
+            }
+        )
+
+    result = ColumnProcessor(ListOverrideSerializer(), {}).get_schema()
+    assert result[0]['title'] == title_override

@@ -11,6 +11,15 @@ SerializerType = Union[
     serializers.Field,
 ]
 
+SCHEMA_OVERRIDE_KEY = 'schema:override'
+UI_SCHEMA_OVERRIDE_KEY = 'uiSchema:override'
+COLUMN_PROCESSOR_OVERRIDE_KEY = 'column:override'
+STYLE_KEYS_TO_IGNORE = [
+    SCHEMA_OVERRIDE_KEY,
+    UI_SCHEMA_OVERRIDE_KEY,
+    COLUMN_PROCESSOR_OVERRIDE_KEY,
+]
+
 
 class ProcessingMixin:
     TYPE_MAP: Dict[str, Dict[str, str]] = {
@@ -152,7 +161,8 @@ class SchemaProcessor(ProcessingMixin):
                     field, self.renderer_context, prefix=self._generate_data_index(name)
                 ).get_schema()
             else:
-                result[name] = self._get_field_properties(field, name)
+                override = field.style.get(SCHEMA_OVERRIDE_KEY)
+                result[name] = override or self._get_field_properties(field, name)
         return result
 
     def get_schema(self) -> Dict[str, Any]:
@@ -182,6 +192,13 @@ class UiSchemaProcessor(ProcessingMixin):
             return list(self.serializer.child.Meta.fields)
         return list(self.serializer.Meta.fields)
 
+    def _get_style_dict(self, field) -> Dict[str, Any]:
+        style_dict = {}
+        for k, v in self._get_style_dict(field).items():
+            if not k.startswith("schema:") and k not in STYLE_KEYS_TO_IGNORE:
+                style_dict[k] = v
+        return style_dict
+
     def _get_ui_field_properties(
         self, field: SerializerType, name: str
     ) -> Dict[str, Any]:
@@ -203,16 +220,14 @@ class UiSchemaProcessor(ProcessingMixin):
             result['ui:widget'] = widget
         if help_text:
             result['ui:help'] = help_text
-        style_dict = {
-            k: v for k, v in (field.style or {}).items() if not k.startswith("schema:")
-        }
-        result.update(style_dict)
+        result.update(field.style)
         return result
 
     def _get_all_ui_properties(self) -> Dict[str, Any]:
         result = {}
         for name, field in self.fields:
-            result[name] = self._get_ui_field_properties(field, name)
+            override = field.style.get(UI_SCHEMA_OVERRIDE_KEY)
+            result[name] = override or self._get_ui_field_properties(field, name)
         return result
 
     def get_ui_schema(self) -> Dict[str, Any]:
@@ -264,7 +279,8 @@ class ColumnProcessor(ProcessingMixin):
                     ).get_schema()
                 )
             else:
-                result.append(self._get_column_properties(field, name))
+                override = field.style.get(COLUMN_PROCESSOR_OVERRIDE_KEY)
+                result.append(override or self._get_column_properties(field, name))
         return result
 
 
