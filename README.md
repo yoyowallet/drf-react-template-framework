@@ -206,7 +206,8 @@ choice_text = serializers.CharField(
 )
 ```
 **Note**: There is no validation around these overrides, so it is left up to the developer to ensure the resulting
-schema is valid.
+schema is valid. For example, `'schema:dependencies:override'` will not remove fields from the main `'properties'` or 
+`'required'` objects. (This can be done by omitting the dependant field from the serializer or using `read_only=True`).
 
 ###### List Sort Order
 Sends the `defaultSortOrder` key with the `list` action serializer:
