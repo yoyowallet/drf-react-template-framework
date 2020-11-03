@@ -1,4 +1,5 @@
 import re
+from contextlib import suppress
 from typing import Any, Dict, List, Tuple, Union
 
 from django.core.serializers.json import DjangoJSONEncoder
@@ -14,10 +15,16 @@ SerializerType = Union[
 SCHEMA_OVERRIDE_KEY = 'schema:override'
 UI_SCHEMA_OVERRIDE_KEY = 'uiSchema:override'
 COLUMN_PROCESSOR_OVERRIDE_KEY = 'column:override'
+DEPENDENCY_SIMPLE_KEY = 'schema:dependencies:simple'
+DEPENDENCY_DYNAMIC_KEY = 'schema:dependencies:dynamic'
+DEPENDENCY_OVERRIDE_KEY = 'schema:dependencies:override'
 STYLE_KEYS_TO_IGNORE = [
     SCHEMA_OVERRIDE_KEY,
     UI_SCHEMA_OVERRIDE_KEY,
     COLUMN_PROCESSOR_OVERRIDE_KEY,
+    DEPENDENCY_SIMPLE_KEY,
+    DEPENDENCY_DYNAMIC_KEY,
+    DEPENDENCY_OVERRIDE_KEY,
 ]
 
 
@@ -165,9 +172,33 @@ class SchemaProcessor(ProcessingMixin):
                 result[name] = override or self._get_field_properties(field, name)
         return result
 
+    def _add_dependencies(self, schema: Dict[str, Any]) -> Dict[str, Any]:
+        dependencies = {}
+        for name, field in self.fields:
+            style_keys = list(field.style.keys())
+            if DEPENDENCY_SIMPLE_KEY in style_keys:
+                dependent_properties = field.style[DEPENDENCY_SIMPLE_KEY]
+                if not isinstance(dependent_properties, list):
+                    dependent_properties = [dependent_properties]
+                dependencies[name] = dependent_properties
+
+                for field_name in dependent_properties:
+                    print(field_name, schema)
+                    if self._is_list_serializer(self.serializer):
+                        with suppress(ValueError):
+                            schema['items']['required'].remove(field_name)
+                        del schema['items']['properties'][field_name]
+                    else:
+                        with suppress(ValueError):
+                            schema['required'].remove(field_name)
+                        del schema['properties'][field_name]
+        if dependencies:
+            schema['dependencies'] = dependencies
+        return schema
+
     def get_schema(self) -> Dict[str, Any]:
         if self._is_list_serializer(self.serializer):
-            return {
+            schema = {
                 'title': self._get_serializer_title(),
                 'type': 'array',
                 'minItems': 0 if self._is_serializer_optional() else 1,
@@ -178,12 +209,14 @@ class SchemaProcessor(ProcessingMixin):
                 },
             }
         else:
-            return {
+            schema = {
                 'title': self._get_serializer_title(),
                 'type': 'object',
                 'required': self._required_fields(),
                 'properties': self._get_all_field_properties(),
             }
+        schema = self._add_dependencies(schema)
+        return schema
 
 
 class UiSchemaProcessor(ProcessingMixin):

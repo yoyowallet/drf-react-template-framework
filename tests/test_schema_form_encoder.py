@@ -3,6 +3,7 @@ from rest_framework import serializers
 
 from drf_react_template.schema_form_encoder import (
     COLUMN_PROCESSOR_OVERRIDE_KEY,
+    DEPENDENCY_SIMPLE_KEY,
     SCHEMA_OVERRIDE_KEY,
     UI_SCHEMA_OVERRIDE_KEY,
     ColumnProcessor,
@@ -238,3 +239,17 @@ def test_question_and_choice_list_override():
 
     result = ColumnProcessor(ListOverrideSerializer(), {}).get_schema()
     assert result[0]['title'] == title_override
+
+
+@pytest.mark.parametrize(
+    ['dependencies'],
+    (['votes'], [['votes']]),
+)
+def test_choice_schema_simple_dependency(dependencies):
+    class SchemaSimpleDependencySerializer(ChoiceSerializer):
+        choice_text = serializers.CharField(style={DEPENDENCY_SIMPLE_KEY: dependencies})
+
+    result = SchemaProcessor(SchemaSimpleDependencySerializer(), {}).get_schema()
+    assert 'votes' not in result['properties']
+    assert 'votes' not in result['required']
+    assert 'votes' in result['dependencies']['choice_text']
