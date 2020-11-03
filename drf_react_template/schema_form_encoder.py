@@ -16,16 +16,21 @@ SCHEMA_OVERRIDE_KEY = 'schema:override'
 UI_SCHEMA_OVERRIDE_KEY = 'uiSchema:override'
 COLUMN_PROCESSOR_OVERRIDE_KEY = 'column:override'
 DEPENDENCY_SIMPLE_KEY = 'schema:dependencies:simple'
-DEPENDENCY_DYNAMIC_KEY = 'schema:dependencies:dynamic'
+DEPENDENCY_CONDITIONAL_KEY = 'schema:dependencies:conditional'
 DEPENDENCY_OVERRIDE_KEY = 'schema:dependencies:override'
-STYLE_KEYS_TO_IGNORE = [
+STYLE_KEYS_TO_IGNORE = {
     SCHEMA_OVERRIDE_KEY,
     UI_SCHEMA_OVERRIDE_KEY,
     COLUMN_PROCESSOR_OVERRIDE_KEY,
     DEPENDENCY_SIMPLE_KEY,
-    DEPENDENCY_DYNAMIC_KEY,
+    DEPENDENCY_CONDITIONAL_KEY,
     DEPENDENCY_OVERRIDE_KEY,
-]
+}
+DEPENDENCY_KEYS = {
+    DEPENDENCY_SIMPLE_KEY,
+    DEPENDENCY_CONDITIONAL_KEY,
+    DEPENDENCY_OVERRIDE_KEY,
+}
 
 
 class ProcessingMixin:
@@ -175,7 +180,13 @@ class SchemaProcessor(ProcessingMixin):
     def _add_dependencies(self, schema: Dict[str, Any]) -> Dict[str, Any]:
         dependencies = {}
         for name, field in self.fields:
-            style_keys = list(field.style.keys())
+            style_keys = set(field.style.keys())
+            if len(DEPENDENCY_KEYS.intersection(style_keys)) > 1:
+                raise KeyError(
+                    f"Cannot have multiple types of dependencies on a field."
+                    f"Please select one of: '{DEPENDENCY_SIMPLE_KEY}', "
+                    f"'{DEPENDENCY_CONDITIONAL_KEY}', '{DEPENDENCY_OVERRIDE_KEY}'"
+                )
             if DEPENDENCY_SIMPLE_KEY in style_keys:
                 dependent_properties = field.style[DEPENDENCY_SIMPLE_KEY]
                 if not isinstance(dependent_properties, list):
@@ -186,11 +197,30 @@ class SchemaProcessor(ProcessingMixin):
                     if self._is_list_serializer(self.serializer):
                         with suppress(ValueError):
                             schema['items']['required'].remove(field_name)
-                        del schema['items']['properties'][field_name]
                     else:
                         with suppress(ValueError):
                             schema['required'].remove(field_name)
-                        del schema['properties'][field_name]
+            elif DEPENDENCY_CONDITIONAL_KEY in style_keys:
+                dependent_properties = field.style[DEPENDENCY_CONDITIONAL_KEY]
+                if not isinstance(dependent_properties, list):
+                    dependent_properties = [dependent_properties]
+
+                field_dependency_object = {'properties': {}, 'required': []}
+                for field_name in dependent_properties:
+                    if self._is_list_serializer(self.serializer):
+                        with suppress(ValueError):
+                            schema['items']['required'].remove(field_name)
+                        properties = schema['items']['properties'].pop(field_name)
+                    else:
+                        with suppress(ValueError):
+                            schema['required'].remove(field_name)
+                        properties = schema['properties'].pop(field_name)
+                    field_dependency_object['properties'][field_name] = properties
+                    field_dependency_object['required'].append(field_name)
+                dependencies[name] = field_dependency_object
+            elif DEPENDENCY_OVERRIDE_KEY in style_keys:
+                dependent_properties = field.style[DEPENDENCY_OVERRIDE_KEY]
+                dependencies[name] = dependent_properties
 
         if dependencies:
             schema['dependencies'] = dependencies

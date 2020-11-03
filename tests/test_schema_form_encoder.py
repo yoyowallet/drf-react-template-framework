@@ -3,6 +3,8 @@ from rest_framework import serializers
 
 from drf_react_template.schema_form_encoder import (
     COLUMN_PROCESSOR_OVERRIDE_KEY,
+    DEPENDENCY_CONDITIONAL_KEY,
+    DEPENDENCY_OVERRIDE_KEY,
     DEPENDENCY_SIMPLE_KEY,
     SCHEMA_OVERRIDE_KEY,
     UI_SCHEMA_OVERRIDE_KEY,
@@ -197,7 +199,6 @@ def test_question_list_sort_bad_key():
         pub_date = serializers.DateField(style={'schema:sort': order})
 
     with pytest.raises(ValueError):
-
         ColumnProcessor(QuestionListSortSerializer(), {}).get_schema()
 
 
@@ -241,15 +242,70 @@ def test_question_and_choice_list_override():
     assert result[0]['title'] == title_override
 
 
+def test_choice_schema_dependency_key_error():
+    class SchemaKeyErrorDependencySerializer(ChoiceSerializer):
+        choice_text = serializers.CharField(
+            style={DEPENDENCY_SIMPLE_KEY: 'votes', DEPENDENCY_OVERRIDE_KEY: {}}
+        )
+
+    with pytest.raises(KeyError):
+        SchemaProcessor(SchemaKeyErrorDependencySerializer(), {}).get_schema()
+
+
 @pytest.mark.parametrize(
     ['dependencies'],
     (['votes'], [['votes']]),
 )
-def test_choice_schema_simple_dependency(dependencies):
-    class SchemaSimpleDependencySerializer(ChoiceSerializer):
+def test_choice_schema_simple_unidirectional_dependency(dependencies):
+    class SchemaSimpleUnidirectionalDependencySerializer(ChoiceSerializer):
         choice_text = serializers.CharField(style={DEPENDENCY_SIMPLE_KEY: dependencies})
 
-    result = SchemaProcessor(SchemaSimpleDependencySerializer(), {}).get_schema()
-    assert 'votes' not in result['properties']
+    result = SchemaProcessor(
+        SchemaSimpleUnidirectionalDependencySerializer(), {}
+    ).get_schema()
     assert 'votes' not in result['required']
     assert 'votes' in result['dependencies']['choice_text']
+
+
+def test_choice_schema_simple_bidirectional_dependency():
+    class SchemaSimpleBidirectionalDependencySerializer(ChoiceSerializer):
+        choice_text = serializers.CharField(style={DEPENDENCY_SIMPLE_KEY: 'votes'})
+        votes = serializers.IntegerField(
+            default=0, style={DEPENDENCY_SIMPLE_KEY: 'choice_text'}
+        )
+
+    result = SchemaProcessor(
+        SchemaSimpleBidirectionalDependencySerializer(), {}
+    ).get_schema()
+    assert 'votes' not in result['required']
+    assert 'choice_text' not in result['required']
+    assert 'votes' in result['dependencies']['choice_text']
+    assert 'choice_text' in result['dependencies']['votes']
+
+
+def test_choice_schema_conditional_dependency(choice_conditional_dependency_votes):
+    class SchemaConditionalDependencySerializer(ChoiceSerializer):
+        choice_text = serializers.CharField(
+            style={DEPENDENCY_CONDITIONAL_KEY: ['votes']}
+        )
+
+    result = SchemaProcessor(SchemaConditionalDependencySerializer(), {}).get_schema()
+    assert 'votes' not in result['required']
+    assert 'votes' not in result['properties']
+    assert result['dependencies'] == {
+        'choice_text': choice_conditional_dependency_votes
+    }
+
+
+def test_choice_schema_override_dependency(choice_conditional_dependency_votes):
+    class SchemaOverrideDependencySerializer(ChoiceSerializer):
+        choice_text = serializers.CharField(
+            style={DEPENDENCY_OVERRIDE_KEY: choice_conditional_dependency_votes}
+        )
+
+    result = SchemaProcessor(SchemaOverrideDependencySerializer(), {}).get_schema()
+    # Since override doesn't do any processing this may result in a bad schema.
+    assert 'votes' in result['properties']
+    assert result['dependencies'] == {
+        'choice_text': choice_conditional_dependency_votes
+    }

@@ -81,3 +81,11 @@ def question_and_choice_list_expected_schema():
         },
         {'title': 'date published', 'dataIndex': 'pub_date', 'key': 'pub_date'},
     ]
+
+
+@pytest.fixture
+def choice_conditional_dependency_votes():
+    return {
+        'properties': {'votes': {'default': 0, 'title': 'Votes', 'type': 'integer'}},
+        'required': ['votes'],
+    }
