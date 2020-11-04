@@ -1,5 +1,4 @@
 import re
-from contextlib import suppress
 from typing import Any, Dict, List, Tuple, Union
 
 from django.core.serializers.json import DjangoJSONEncoder
@@ -17,19 +16,19 @@ UI_SCHEMA_OVERRIDE_KEY = 'uiSchema:override'
 COLUMN_PROCESSOR_OVERRIDE_KEY = 'column:override'
 DEPENDENCY_SIMPLE_KEY = 'schema:dependencies:simple'
 DEPENDENCY_CONDITIONAL_KEY = 'schema:dependencies:conditional'
+DEPENDENCY_DYNAMIC_KEY = 'schema:dependencies:dynamic'
 DEPENDENCY_OVERRIDE_KEY = 'schema:dependencies:override'
+DEPENDENCY_KEYS = {
+    DEPENDENCY_SIMPLE_KEY,
+    DEPENDENCY_CONDITIONAL_KEY,
+    DEPENDENCY_DYNAMIC_KEY,
+    DEPENDENCY_OVERRIDE_KEY,
+}
 STYLE_KEYS_TO_IGNORE = {
     SCHEMA_OVERRIDE_KEY,
     UI_SCHEMA_OVERRIDE_KEY,
     COLUMN_PROCESSOR_OVERRIDE_KEY,
-    DEPENDENCY_SIMPLE_KEY,
-    DEPENDENCY_CONDITIONAL_KEY,
-    DEPENDENCY_OVERRIDE_KEY,
-}
-DEPENDENCY_KEYS = {
-    DEPENDENCY_SIMPLE_KEY,
-    DEPENDENCY_CONDITIONAL_KEY,
-    DEPENDENCY_OVERRIDE_KEY,
+    *DEPENDENCY_KEYS,
 }
 
 
@@ -105,6 +104,15 @@ class ProcessingMixin:
 
 
 class SchemaProcessor(ProcessingMixin):
+    def __init__(
+        self,
+        serializer: SerializerType,
+        renderer_context: Dict[str, Any],
+        prefix: str = '',
+    ):
+        super().__init__(serializer, renderer_context, prefix)
+        self.fields_to_be_removed = []
+
     def _is_serializer_optional(self) -> bool:
         return (
             self.serializer.allow_empty
@@ -177,51 +185,139 @@ class SchemaProcessor(ProcessingMixin):
                 result[name] = override or self._get_field_properties(field, name)
         return result
 
+    def _remove_from_required(
+        self, schema: Dict[str, Any], field_name: str
+    ) -> Dict[str, Any]:
+        try:
+            if self._is_list_serializer(self.serializer):
+                schema['items']['required'].remove(field_name)
+            else:
+                schema['required'].remove(field_name)
+        except ValueError:
+            pass
+        return schema
+
+    def _get_from_properties(
+        self, schema: Dict[str, Any], field_name: str, pop: bool = False
+    ) -> Dict[str, Any]:
+        if self._is_list_serializer(self.serializer):
+            properties = (
+                schema['items']['properties'].pop(field_name)
+                if pop
+                else schema['items']['properties'].get(field_name)
+            )
+        else:
+            properties = (
+                schema['properties'].pop(field_name)
+                if pop
+                else schema['properties'].get(field_name)
+            )
+        return properties
+
+    @staticmethod
+    def _create_enum_dependency_object(
+        field_name: str, enum_key: str, main_properties: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        if enum_key not in main_properties['enum']:
+            raise KeyError(
+                f"'{enum_key}' is not a valid enum, the options are: "
+                f"{main_properties['enum']}"
+            )
+        idx = main_properties['enum'].index(enum_key)
+        enum_dependency_object = {
+            'properties': {field_name: main_properties.copy()},
+            'required': [],
+        }
+        enum_dependency_object['properties'][field_name]['enum'] = [enum_key]
+        enum_dependency_object['properties'][field_name]['enumNames'] = [
+            main_properties['enumNames'][idx]
+        ]
+
+        return enum_dependency_object
+
+    def _simple_dependency(
+        self, dependent_properties: Union[str, List[str]], schema: Dict[str, Any]
+    ) -> Tuple[List[str], Dict[str, Any]]:
+        if not isinstance(dependent_properties, list):
+            dependent_properties = [dependent_properties]
+        for field_name in dependent_properties:
+            schema = self._remove_from_required(schema, field_name)
+        return dependent_properties, schema
+
+    def _conditional_dependency(
+        self, dependent_properties: Union[str, List[str]], schema: Dict[str, Any]
+    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        if not isinstance(dependent_properties, list):
+            dependent_properties = [dependent_properties]
+        dependency_object = {'properties': {}, 'required': []}
+        for field_name in dependent_properties:
+            self.fields_to_be_removed.append(field_name)
+            schema = self._remove_from_required(schema, field_name)
+            properties = self._get_from_properties(schema, field_name, pop=False)
+            dependency_object['properties'][field_name] = properties
+            dependency_object['required'].append(field_name)
+        return dependency_object, schema
+
+    def _dynamic_dependency(
+        self, name: str, dependent_properties: Dict[str, Any], schema: Dict[str, Any]
+    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        main_properties = self._get_from_properties(schema, name, pop=False)
+        if 'enum' not in main_properties:
+            raise KeyError('Only enumerable fields can have dynamic dependencies')
+        dependency_object = {'oneOf': []}
+        for enum_key, dep_fields in dependent_properties.items():
+            enum_dependency_object = self._create_enum_dependency_object(
+                name, enum_key, main_properties
+            )
+            if not dep_fields:
+                dep_fields = []
+            elif not isinstance(dep_fields, list):
+                dep_fields = [dep_fields]
+            for field_name in dep_fields:
+                self.fields_to_be_removed.append(field_name)
+                schema = self._remove_from_required(schema, field_name)
+                properties = self._get_from_properties(schema, field_name, pop=False)
+                enum_dependency_object['properties'][field_name] = properties
+                enum_dependency_object['required'].append(field_name)
+            dependency_object['oneOf'].append(enum_dependency_object)
+        return dependency_object, schema
+
     def _add_dependencies(self, schema: Dict[str, Any]) -> Dict[str, Any]:
         dependencies = {}
         for name, field in self.fields:
+            dependency_object = {}
             style_keys = set(field.style.keys())
-            if len(DEPENDENCY_KEYS.intersection(style_keys)) > 1:
-                raise KeyError(
-                    f"Cannot have multiple types of dependencies on a field."
-                    f"Please select one of: '{DEPENDENCY_SIMPLE_KEY}', "
-                    f"'{DEPENDENCY_CONDITIONAL_KEY}', '{DEPENDENCY_OVERRIDE_KEY}'"
+            dep_key = list(DEPENDENCY_KEYS.intersection(style_keys))
+            if dep_key:
+                if len(dep_key) > 1:
+                    raise KeyError(
+                        f"Cannot have multiple types of dependencies on a field."
+                        f"Please select one of: '{DEPENDENCY_SIMPLE_KEY}', "
+                        f"'{DEPENDENCY_CONDITIONAL_KEY}', '{DEPENDENCY_OVERRIDE_KEY}'"
+                    )
+                dep_key = dep_key[0]
+            else:
+                continue
+            dependent_properties = field.style[dep_key]
+
+            if dep_key == DEPENDENCY_SIMPLE_KEY:
+                dependency_object, schema = self._simple_dependency(
+                    dependent_properties, schema
                 )
-            if DEPENDENCY_SIMPLE_KEY in style_keys:
-                dependent_properties = field.style[DEPENDENCY_SIMPLE_KEY]
-                if not isinstance(dependent_properties, list):
-                    dependent_properties = [dependent_properties]
-                dependencies[name] = dependent_properties
+            elif dep_key == DEPENDENCY_CONDITIONAL_KEY:
+                dependency_object, schema = self._conditional_dependency(
+                    dependent_properties, schema
+                )
+            elif dep_key == DEPENDENCY_DYNAMIC_KEY:
+                dependency_object, schema = self._dynamic_dependency(
+                    name, dependent_properties, schema
+                )
+            elif dep_key == DEPENDENCY_OVERRIDE_KEY:
+                dependency_object = dependent_properties
+            dependencies[name] = dependency_object
 
-                for field_name in dependent_properties:
-                    if self._is_list_serializer(self.serializer):
-                        with suppress(ValueError):
-                            schema['items']['required'].remove(field_name)
-                    else:
-                        with suppress(ValueError):
-                            schema['required'].remove(field_name)
-            elif DEPENDENCY_CONDITIONAL_KEY in style_keys:
-                dependent_properties = field.style[DEPENDENCY_CONDITIONAL_KEY]
-                if not isinstance(dependent_properties, list):
-                    dependent_properties = [dependent_properties]
-
-                field_dependency_object = {'properties': {}, 'required': []}
-                for field_name in dependent_properties:
-                    if self._is_list_serializer(self.serializer):
-                        with suppress(ValueError):
-                            schema['items']['required'].remove(field_name)
-                        properties = schema['items']['properties'].pop(field_name)
-                    else:
-                        with suppress(ValueError):
-                            schema['required'].remove(field_name)
-                        properties = schema['properties'].pop(field_name)
-                    field_dependency_object['properties'][field_name] = properties
-                    field_dependency_object['required'].append(field_name)
-                dependencies[name] = field_dependency_object
-            elif DEPENDENCY_OVERRIDE_KEY in style_keys:
-                dependent_properties = field.style[DEPENDENCY_OVERRIDE_KEY]
-                dependencies[name] = dependent_properties
-
+        for field_name in self.fields_to_be_removed:
+            self._get_from_properties(schema, field_name, pop=True)  # In place mutation
         if dependencies:
             schema['dependencies'] = dependencies
         return schema

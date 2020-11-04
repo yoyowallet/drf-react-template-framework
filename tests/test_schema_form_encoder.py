@@ -4,6 +4,7 @@ from rest_framework import serializers
 from drf_react_template.schema_form_encoder import (
     COLUMN_PROCESSOR_OVERRIDE_KEY,
     DEPENDENCY_CONDITIONAL_KEY,
+    DEPENDENCY_DYNAMIC_KEY,
     DEPENDENCY_OVERRIDE_KEY,
     DEPENDENCY_SIMPLE_KEY,
     SCHEMA_OVERRIDE_KEY,
@@ -294,6 +295,49 @@ def test_choice_schema_conditional_dependency(choice_conditional_dependency_vote
     assert 'votes' not in result['properties']
     assert result['dependencies'] == {
         'choice_text': choice_conditional_dependency_votes
+    }
+
+
+def test_choice_schema_dynamic_dependency():
+    class SchemaDynamicDependencySerializer(serializers.Serializer):
+        choice_text = serializers.ChoiceField(
+            choices=(('yes', 'Yes'), ('no', 'No')),
+            style={DEPENDENCY_DYNAMIC_KEY: {'yes': ['votes'], 'no': None}},
+        )
+        votes = serializers.IntegerField()
+
+        class Meta:
+            fields = ('choices', 'votes')
+
+    result = SchemaProcessor(SchemaDynamicDependencySerializer(), {}).get_schema()
+    assert result['dependencies'] == {
+        'choice_text': {
+            'oneOf': [
+                {
+                    'properties': {
+                        'choice_text': {
+                            'type': 'string',
+                            'title': 'Choice Text',
+                            'enum': ['yes'],
+                            'enumNames': ['Yes'],
+                        },
+                        'votes': {'type': 'integer', 'title': 'Votes'},
+                    },
+                    'required': ['votes'],
+                },
+                {
+                    'properties': {
+                        'choice_text': {
+                            'type': 'string',
+                            'title': 'Choice Text',
+                            'enum': ['no'],
+                            'enumNames': ['No'],
+                        }
+                    },
+                    'required': [],
+                },
+            ]
+        }
     }
 
 

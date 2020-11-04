@@ -165,8 +165,8 @@ The following are a list of valid (tested) keys and their uses.
 ###### Dependencies
 
 `react-jsonschema-form` allows for the use of [dependencies](https://react-jsonschema-form.readthedocs.io/en/latest/usage/dependencies/#dependencies) 
-between multiple fields. This library has analogues for the first three types (bidirectional, unidirectional, 
-and conditional). Dynamic dependencies can be created via the overrides described below.
+between multiple fields. This library has analogues for the four types (bidirectional, unidirectional, conditional, and
+dynamic).
 ```python
 # Unidirectional
 choice_text = serializers.CharField(
@@ -184,6 +184,13 @@ votes = serializers.IntegerField(
 # Conditional
 choice_text = serializers.CharField(
     style={'schema:dependencies:conditional': ['votes']}
+)
+
+# Dynamic - must be an enum field, and only one choice per dependency,
+# multiple choices can have the same dependencies (side-stepping this issue).
+choice_text = serializers.ChoiceField(
+    choices=(('yes', 'Yes'), ('no', 'No')),
+    style={'schema:dependencies:dynamic': {'yes': ['votes'], 'no': None}}
 )
 ```
 
