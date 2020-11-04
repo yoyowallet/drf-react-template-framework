@@ -298,47 +298,37 @@ def test_choice_schema_conditional_dependency(choice_conditional_dependency_vote
     }
 
 
-def test_choice_schema_dynamic_dependency():
-    class SchemaDynamicDependencySerializer(serializers.Serializer):
+def test_choice_schema_dynamic_dependency(choice_dynamic_dependency_votes):
+    class SchemaDynamicDependencySerializer(ChoiceSerializer):
         choice_text = serializers.ChoiceField(
             choices=(('yes', 'Yes'), ('no', 'No')),
             style={DEPENDENCY_DYNAMIC_KEY: {'yes': ['votes'], 'no': None}},
         )
         votes = serializers.IntegerField()
 
-        class Meta:
-            fields = ('choices', 'votes')
-
     result = SchemaProcessor(SchemaDynamicDependencySerializer(), {}).get_schema()
-    assert result['dependencies'] == {
-        'choice_text': {
-            'oneOf': [
-                {
-                    'properties': {
-                        'choice_text': {
-                            'type': 'string',
-                            'title': 'Choice Text',
-                            'enum': ['yes'],
-                            'enumNames': ['Yes'],
-                        },
-                        'votes': {'type': 'integer', 'title': 'Votes'},
-                    },
-                    'required': ['votes'],
-                },
-                {
-                    'properties': {
-                        'choice_text': {
-                            'type': 'string',
-                            'title': 'Choice Text',
-                            'enum': ['no'],
-                            'enumNames': ['No'],
-                        }
-                    },
-                    'required': [],
-                },
-            ]
-        }
-    }
+    assert result['dependencies'] == choice_dynamic_dependency_votes
+
+
+def test_choice_schema_dynamic_dependency_non_enum_field():
+    class SchemaDynamicDependencySerializer(ChoiceSerializer):
+        choice_text = serializers.CharField(
+            style={DEPENDENCY_DYNAMIC_KEY: {'yes': ['votes'], 'no': None}},
+        )
+
+    with pytest.raises(KeyError):
+        SchemaProcessor(SchemaDynamicDependencySerializer(), {}).get_schema()
+
+
+def test_choice_schema_dynamic_dependency_bad_enum_key_in_style():
+    class SchemaDynamicDependencySerializer(ChoiceSerializer):
+        choice_text = serializers.ChoiceField(
+            choices=(('yes', 'Yes'), ('no', 'No')),
+            style={DEPENDENCY_DYNAMIC_KEY: {'yes': ['votes'], 'test': None}},
+        )
+
+    with pytest.raises(KeyError):
+        SchemaProcessor(SchemaDynamicDependencySerializer(), {}).get_schema()
 
 
 def test_choice_schema_override_dependency(choice_conditional_dependency_votes):
@@ -353,3 +343,21 @@ def test_choice_schema_override_dependency(choice_conditional_dependency_votes):
     assert result['dependencies'] == {
         'choice_text': choice_conditional_dependency_votes
     }
+
+
+def test_choice_schema_simple_dynamic_dependencies(choice_dynamic_dependency_votes):
+    class SchemaSimpleDynamicDependencySerializer(ChoiceSerializer):
+        choice_text = serializers.ChoiceField(
+            choices=(('yes', 'Yes'), ('no', 'No')),
+            style={DEPENDENCY_DYNAMIC_KEY: {'yes': ['votes'], 'no': None}},
+        )
+        votes = serializers.IntegerField()
+        conditional = serializers.IntegerField(style={DEPENDENCY_SIMPLE_KEY: ['votes']})
+
+    result = SchemaProcessor(SchemaSimpleDynamicDependencySerializer(), {}).get_schema()
+    assert 'votes' in result['properties']
+    assert 'votes' in result['dependencies']['conditional']
+    assert (
+        result['dependencies']['choice_text']
+        == choice_dynamic_dependency_votes['choice_text']
+    )

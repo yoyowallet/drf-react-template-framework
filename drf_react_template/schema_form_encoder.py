@@ -111,7 +111,8 @@ class SchemaProcessor(ProcessingMixin):
         prefix: str = '',
     ):
         super().__init__(serializer, renderer_context, prefix)
-        self.fields_to_be_removed = []
+        self.fields_to_be_removed = set()
+        self.fields_to_be_kept = set()
 
     def _is_serializer_optional(self) -> bool:
         return (
@@ -214,6 +215,30 @@ class SchemaProcessor(ProcessingMixin):
             )
         return properties
 
+    def _simple_dependency(
+        self, dependent_properties: Union[str, List[str]], schema: Dict[str, Any]
+    ) -> Tuple[List[str], Dict[str, Any]]:
+        if not isinstance(dependent_properties, list):
+            dependent_properties = [dependent_properties]
+        for field_name in dependent_properties:
+            schema = self._remove_from_required(schema, field_name)
+            self.fields_to_be_kept.add(field_name)
+        return dependent_properties, schema
+
+    def _conditional_dependency(
+        self, dependent_properties: Union[str, List[str]], schema: Dict[str, Any]
+    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        if not isinstance(dependent_properties, list):
+            dependent_properties = [dependent_properties]
+        dependency_object = {'properties': {}, 'required': []}
+        for field_name in dependent_properties:
+            self.fields_to_be_removed.add(field_name)
+            schema = self._remove_from_required(schema, field_name)
+            properties = self._get_from_properties(schema, field_name, pop=False)
+            dependency_object['properties'][field_name] = properties
+            dependency_object['required'].append(field_name)
+        return dependency_object, schema
+
     @staticmethod
     def _create_enum_dependency_object(
         field_name: str, enum_key: str, main_properties: Dict[str, Any]
@@ -235,29 +260,6 @@ class SchemaProcessor(ProcessingMixin):
 
         return enum_dependency_object
 
-    def _simple_dependency(
-        self, dependent_properties: Union[str, List[str]], schema: Dict[str, Any]
-    ) -> Tuple[List[str], Dict[str, Any]]:
-        if not isinstance(dependent_properties, list):
-            dependent_properties = [dependent_properties]
-        for field_name in dependent_properties:
-            schema = self._remove_from_required(schema, field_name)
-        return dependent_properties, schema
-
-    def _conditional_dependency(
-        self, dependent_properties: Union[str, List[str]], schema: Dict[str, Any]
-    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
-        if not isinstance(dependent_properties, list):
-            dependent_properties = [dependent_properties]
-        dependency_object = {'properties': {}, 'required': []}
-        for field_name in dependent_properties:
-            self.fields_to_be_removed.append(field_name)
-            schema = self._remove_from_required(schema, field_name)
-            properties = self._get_from_properties(schema, field_name, pop=False)
-            dependency_object['properties'][field_name] = properties
-            dependency_object['required'].append(field_name)
-        return dependency_object, schema
-
     def _dynamic_dependency(
         self, name: str, dependent_properties: Dict[str, Any], schema: Dict[str, Any]
     ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
@@ -274,7 +276,7 @@ class SchemaProcessor(ProcessingMixin):
             elif not isinstance(dep_fields, list):
                 dep_fields = [dep_fields]
             for field_name in dep_fields:
-                self.fields_to_be_removed.append(field_name)
+                self.fields_to_be_removed.add(field_name)
                 schema = self._remove_from_required(schema, field_name)
                 properties = self._get_from_properties(schema, field_name, pop=False)
                 enum_dependency_object['properties'][field_name] = properties
@@ -316,7 +318,7 @@ class SchemaProcessor(ProcessingMixin):
                 dependency_object = dependent_properties
             dependencies[name] = dependency_object
 
-        for field_name in self.fields_to_be_removed:
+        for field_name in self.fields_to_be_removed.difference(self.fields_to_be_kept):
             self._get_from_properties(schema, field_name, pop=True)  # In place mutation
         if dependencies:
             schema['dependencies'] = dependencies

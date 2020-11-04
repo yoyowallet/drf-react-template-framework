@@ -89,3 +89,36 @@ def choice_conditional_dependency_votes():
         'properties': {'votes': {'default': 0, 'title': 'Votes', 'type': 'integer'}},
         'required': ['votes'],
     }
+
+
+@pytest.fixture
+def choice_dynamic_dependency_votes():
+    return {
+        'choice_text': {
+            'oneOf': [
+                {
+                    'properties': {
+                        'choice_text': {
+                            'type': 'string',
+                            'title': 'Choice Text',
+                            'enum': ['yes'],
+                            'enumNames': ['Yes'],
+                        },
+                        'votes': {'type': 'integer', 'title': 'Votes'},
+                    },
+                    'required': ['votes'],
+                },
+                {
+                    'properties': {
+                        'choice_text': {
+                            'type': 'string',
+                            'title': 'Choice Text',
+                            'enum': ['no'],
+                            'enumNames': ['No'],
+                        }
+                    },
+                    'required': [],
+                },
+            ]
+        }
+    }
