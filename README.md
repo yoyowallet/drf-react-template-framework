@@ -162,16 +162,42 @@ additional attributes for custom widgets.
 
 The following are a list of valid (tested) keys and their uses.
 
+###### Dependencies
+
+`react-jsonschema-form` allows for the use of [dependencies](https://react-jsonschema-form.readthedocs.io/en/latest/usage/dependencies/#dependencies) 
+between multiple fields. This library has analogues for the four types (bidirectional, unidirectional, conditional, and
+dynamic).
+```python
+# Unidirectional
+choice_text = serializers.CharField(
+    style={'schema:dependencies:simple': ['votes']}
+)
+
+# Bidirectional - note the different value styles, either is fine.
+choice_text = serializers.CharField(
+    style={'schema:dependencies:simple': ['votes']}
+)
+votes = serializers.IntegerField(
+    default=0, style={'schema:dependencies:simple': 'choice_text'}
+)
+
+# Conditional
+choice_text = serializers.CharField(
+    style={'schema:dependencies:conditional': ['votes']}
+)
+
+# Dynamic - must be an enum field, and only one choice per dependency,
+# multiple choices can have the same dependencies (side-stepping this issue).
+choice_text = serializers.ChoiceField(
+    choices=(('yes', 'Yes'), ('no', 'No')),
+    style={'schema:dependencies:dynamic': {'yes': ['votes'], 'no': None}}
+)
+```
+
 ###### Field Overrides 
 
 Since this framework doesn't cover 100% of the features of the `react-jsonschema-form`, it is possible to provide 
 `dict` objects which override the individual field properties:
-```python
-
-```
-
-###### List Sort Order
-Sends the `defaultSortOrder` key with the `list` action serializer:
 ```python
 choice_text = serializers.CharField(
     style={
@@ -181,12 +207,20 @@ choice_text = serializers.CharField(
             'title': 'Overridden title',
             'dataIndex': 'question_text',
             'key': 'question_text',
-        }
+        },
+        'schema:dependencies:override': ['votes']
     }
 )
 ```
 **Note**: There is no validation around these overrides, so it is left up to the developer to ensure the resulting
-schema is valid.
+schema is valid. For example, `'schema:dependencies:override'` will not remove fields from the main `'properties'` or 
+`'required'` objects. (This can be done by omitting the dependant field from the serializer or using `read_only=True`).
+
+###### List Sort Order
+Sends the `defaultSortOrder` key with the `list` action serializer:
+```python
+choice_text = serializers.CharField(, style={'schema:sort': 'ascend'})
+```
 
 ###### Widget, Type, and Enum
 While the framework tries to provide sensible defaults for DRF fields, 
