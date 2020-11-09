@@ -266,6 +266,10 @@ def test_choice_schema_simple_unidirectional_dependency(dependencies):
     ).get_schema()
     assert 'votes' not in result['required']
     assert 'votes' in result['dependencies']['choice_text']
+    ui_result = UiSchemaProcessor(
+        SchemaSimpleUnidirectionalDependencySerializer(), {}
+    ).get_ui_schema()
+    assert DEPENDENCY_SIMPLE_KEY not in ui_result['votes']
 
 
 def test_choice_schema_simple_bidirectional_dependency():
@@ -282,6 +286,11 @@ def test_choice_schema_simple_bidirectional_dependency():
     assert 'choice_text' not in result['required']
     assert 'votes' in result['dependencies']['choice_text']
     assert 'choice_text' in result['dependencies']['votes']
+    ui_result = UiSchemaProcessor(
+        SchemaSimpleBidirectionalDependencySerializer(), {}
+    ).get_ui_schema()
+    assert DEPENDENCY_SIMPLE_KEY not in ui_result['votes']
+    assert DEPENDENCY_SIMPLE_KEY not in ui_result['choice_text']
 
 
 def test_choice_schema_conditional_dependency(choice_conditional_dependency_votes):
@@ -296,6 +305,10 @@ def test_choice_schema_conditional_dependency(choice_conditional_dependency_vote
     assert result['dependencies'] == {
         'choice_text': choice_conditional_dependency_votes
     }
+    ui_result = UiSchemaProcessor(
+        SchemaConditionalDependencySerializer(), {}
+    ).get_ui_schema()
+    assert DEPENDENCY_CONDITIONAL_KEY not in ui_result['choice_text']
 
 
 def test_choice_schema_dynamic_dependency(choice_dynamic_dependency_votes):
@@ -308,6 +321,10 @@ def test_choice_schema_dynamic_dependency(choice_dynamic_dependency_votes):
 
     result = SchemaProcessor(SchemaDynamicDependencySerializer(), {}).get_schema()
     assert result['dependencies'] == choice_dynamic_dependency_votes
+    ui_result = UiSchemaProcessor(
+        SchemaDynamicDependencySerializer(), {}
+    ).get_ui_schema()
+    assert DEPENDENCY_DYNAMIC_KEY not in ui_result['choice_text']
 
 
 def test_choice_schema_dynamic_dependency_non_enum_field():

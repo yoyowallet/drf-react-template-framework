@@ -14,6 +14,12 @@ SerializerType = Union[
 SCHEMA_OVERRIDE_KEY = 'schema:override'
 UI_SCHEMA_OVERRIDE_KEY = 'uiSchema:override'
 COLUMN_PROCESSOR_OVERRIDE_KEY = 'column:override'
+OVERRIDE_KEYS = {
+    SCHEMA_OVERRIDE_KEY,
+    UI_SCHEMA_OVERRIDE_KEY,
+    COLUMN_PROCESSOR_OVERRIDE_KEY,
+}
+
 DEPENDENCY_SIMPLE_KEY = 'schema:dependencies:simple'
 DEPENDENCY_CONDITIONAL_KEY = 'schema:dependencies:conditional'
 DEPENDENCY_DYNAMIC_KEY = 'schema:dependencies:dynamic'
@@ -24,10 +30,9 @@ DEPENDENCY_KEYS = {
     DEPENDENCY_DYNAMIC_KEY,
     DEPENDENCY_OVERRIDE_KEY,
 }
+
 STYLE_KEYS_TO_IGNORE = {
-    SCHEMA_OVERRIDE_KEY,
-    UI_SCHEMA_OVERRIDE_KEY,
-    COLUMN_PROCESSOR_OVERRIDE_KEY,
+    *OVERRIDE_KEYS,
     *DEPENDENCY_KEYS,
 }
 
@@ -381,7 +386,9 @@ class UiSchemaProcessor(ProcessingMixin):
             result['ui:widget'] = widget
         if help_text:
             result['ui:help'] = help_text
-        result.update(field.style)
+        result.update(
+            {k: v for k, v in field.style.items() if k not in STYLE_KEYS_TO_IGNORE}
+        )
         return result
 
     def _get_all_ui_properties(self) -> Dict[str, Any]:
