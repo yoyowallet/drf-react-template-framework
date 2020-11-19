@@ -100,8 +100,9 @@ Choice -> Choice
 ```
 If a title isn't required (e.g. for a nested form), then the `__init__` method can be updated:
 ```python
-def __init__(self, **kwargs):
-    super().__init__(label='', **kwargs)
+def __init__(self, *args, **kwargs):
+    kwargs['label'] = kwargs.get('label', '')
+    super().__init__(*args, **kwargs)
 ```
 
 #### Serializer Field Attributes
