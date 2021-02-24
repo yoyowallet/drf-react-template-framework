@@ -98,10 +98,10 @@ ChoiceSerializer -> Choice
 QuestionAndChoiceSerializer -> Question And Choice
 Choice -> Choice
 ```
-If a title isn't required (e.g. for a nested form), then the `__init__` method can be updated:
+If a different title is required (or no title for nested forms), then the `__init__` method can be updated:
 ```python
 def __init__(self, *args, **kwargs):
-    kwargs['label'] = kwargs.get('label', '')
+    kwargs['label'] = 'New Form Title'
     super().__init__(*args, **kwargs)
 ```
 
