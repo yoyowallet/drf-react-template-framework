@@ -243,6 +243,19 @@ def test_question_and_choice_list_override():
     assert result[0]['title'] == title_override
 
 
+def test_serializer_level_style():
+    ui_template_key = 'ui:template'
+    new_template = 'new_template'
+
+    class CustomStyleSerializer(ChoiceSerializer):
+        def __init__(self, *args, **kwargs):
+            kwargs['style'] = {'ui:template': new_template}
+            super().__init__(*args, **kwargs)
+
+    result = UiSchemaProcessor(CustomStyleSerializer(), {}).get_ui_schema()
+    assert result[ui_template_key] == new_template
+
+
 def test_choice_schema_dependency_key_error():
     class SchemaKeyErrorDependencySerializer(ChoiceSerializer):
         choice_text = serializers.CharField(

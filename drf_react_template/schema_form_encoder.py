@@ -360,7 +360,7 @@ class UiSchemaProcessor(ProcessingMixin):
 
     def _get_style_dict(self, field) -> Dict[str, Any]:
         style_dict = {}
-        for k, v in self._get_style_dict(field).items():
+        for k, v in field.style.items():
             if not k.startswith("schema:") and k not in STYLE_KEYS_TO_IGNORE:
                 style_dict[k] = v
         return style_dict
@@ -386,9 +386,7 @@ class UiSchemaProcessor(ProcessingMixin):
             result['ui:widget'] = widget
         if help_text:
             result['ui:help'] = help_text
-        result.update(
-            {k: v for k, v in field.style.items() if k not in STYLE_KEYS_TO_IGNORE}
-        )
+        result.update(self._get_style_dict(field))
         return result
 
     def _get_all_ui_properties(self) -> Dict[str, Any]:
@@ -403,12 +401,14 @@ class UiSchemaProcessor(ProcessingMixin):
             return {
                 'items': {
                     **{'ui:order': self._field_order()},
+                    **self._get_style_dict(self.serializer),
                     **self._get_all_ui_properties(),
                 }
             }
         else:
             return {
                 **{'ui:order': self._field_order()},
+                **self._get_style_dict(self.serializer),
                 **self._get_all_ui_properties(),
             }
 
