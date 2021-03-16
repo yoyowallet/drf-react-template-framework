@@ -163,6 +163,13 @@ additional attributes for custom widgets.
 
 The following are a list of valid (tested) keys and their uses.
 
+**Note**: This can also be done at the serializer level:
+```python
+def __init__(self, *args, **kwargs):
+    kwargs['style'] = {'ui:template': 'Card'}
+    super().__init__(*args, **kwargs)
+```
+
 ###### Dependencies
 
 `react-jsonschema-form` allows for the use of [dependencies](https://react-jsonschema-form.readthedocs.io/en/latest/usage/dependencies/#dependencies) 
