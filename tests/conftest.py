@@ -122,3 +122,26 @@ def choice_dynamic_dependency_votes():
             ]
         }
     }
+
+
+@pytest.fixture
+def custom_field_type_expected_schema():
+    return {
+        'choice_text': {
+            'type': 'string',
+            'title': 'Choice text'
+        },
+        'votes': {
+            'type': 'integer',
+            'title': 'Votes',
+            'default': 0
+        },
+        'image_field': {
+            'type': 'file',
+            'title': 'Image field'
+        },
+        'uuid_field': {
+            'type': 'uuid',
+            'title': 'Uuid field'
+        }
+    }
