@@ -36,17 +36,17 @@ def question_and_choice_retrieve_expected_schema():
         'type': 'object',
         'required': ['question_text', 'pub_date'],
         'properties': {
-            'question_text': {'type': 'string', 'title': 'Question Text'},
+            'question_text': {'type': 'string', 'title': 'Question text'},
             'pub_date': {'type': 'string', 'title': 'date published'},
             'choices': {
-                'title': 'Choice',
+                'title': 'Choices',
                 'type': 'array',
                 'minItems': 0,
                 'items': {
                     'type': 'object',
                     'required': ['choice_text'],
                     'properties': {
-                        'choice_text': {'type': 'string', 'title': 'Choice Text'},
+                        'choice_text': {'type': 'string', 'title': 'Choice text'},
                         'votes': {'type': 'integer', 'title': 'Votes', 'default': 0},
                     },
                 },
@@ -75,7 +75,7 @@ def question_and_choice_retrieve_expected_ui_schema():
 def question_and_choice_list_expected_schema():
     return [
         {
-            'title': 'Question Text',
+            'title': 'Question text',
             'dataIndex': 'question_text',
             'key': 'question_text',
         },
@@ -100,7 +100,7 @@ def choice_dynamic_dependency_votes():
                     'properties': {
                         'choice_text': {
                             'type': 'string',
-                            'title': 'Choice Text',
+                            'title': 'Choice text',
                             'enum': ['yes'],
                             'enumNames': ['Yes'],
                         },
@@ -112,7 +112,7 @@ def choice_dynamic_dependency_votes():
                     'properties': {
                         'choice_text': {
                             'type': 'string',
-                            'title': 'Choice Text',
+                            'title': 'Choice text',
                             'enum': ['no'],
                             'enumNames': ['No'],
                         }

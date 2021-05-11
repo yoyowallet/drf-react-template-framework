@@ -60,9 +60,9 @@ class ProcessingMixin:
     ):
         self.serializer = serializer
         if self._is_list_serializer(serializer):
-            self.fields = self._filter_fields(serializer.child.get_fields().items())
+            self.fields = self._filter_fields(serializer.child.fields.items())
         else:
-            self.fields = self._filter_fields(serializer.get_fields().items())
+            self.fields = self._filter_fields(serializer.fields.items())
         self.renderer_context = renderer_context
         self.prefix = prefix
 
