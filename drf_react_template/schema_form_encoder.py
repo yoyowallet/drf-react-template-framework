@@ -1,6 +1,7 @@
 import re
 from typing import Any, Dict, List, Tuple, Union
 
+from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
 from rest_framework import fields, serializers
 
@@ -57,6 +58,7 @@ class ProcessingMixin:
         serializer: SerializerType,
         renderer_context: Dict[str, Any],
         prefix: str = '',
+        extra_types: Dict[str, Any] = {},
     ):
         self.serializer = serializer
         if self._is_list_serializer(serializer):
@@ -65,6 +67,11 @@ class ProcessingMixin:
             self.fields = self._filter_fields(serializer.fields.items())
         self.renderer_context = renderer_context
         self.prefix = prefix
+        self.extra_types = extra_types
+        self.extra_types.update(
+            getattr(settings, 'DRF_REACT_TEMPLATE_TYPE_MAP', {})
+        )
+        self.TYPE_MAP.update(self.extra_types)
 
     def _get_type_map_value(self, field: SerializerType):
         result = {
@@ -114,8 +121,9 @@ class SchemaProcessor(ProcessingMixin):
         serializer: SerializerType,
         renderer_context: Dict[str, Any],
         prefix: str = '',
+        extra_types: Dict[str, Any] = {},
     ):
-        super().__init__(serializer, renderer_context, prefix)
+        super().__init__(serializer, renderer_context, prefix, extra_types)
         self.fields_to_be_removed = set()
         self.fields_to_be_kept = set()
 

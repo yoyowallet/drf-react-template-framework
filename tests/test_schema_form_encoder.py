@@ -391,3 +391,14 @@ def test_choice_schema_simple_dynamic_dependencies(choice_dynamic_dependency_vot
         result['dependencies']['choice_text']
         == choice_dynamic_dependency_votes['choice_text']
     )
+
+
+def test_extra_field_type(custom_field_type_expected_schema):
+    class CustomFieldTypeSerializer(ChoiceSerializer):
+        image_field = serializers.ImageField(required=True)
+        uuid_field = serializers.UUIDField(required=True)
+
+    result = SchemaProcessor(
+        CustomFieldTypeSerializer(), {}, extra_types={'UUIDField': {'type': 'uuid'}}
+    ).get_schema()
+    assert result['properties'] == custom_field_type_expected_schema

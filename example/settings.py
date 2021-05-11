@@ -50,3 +50,7 @@ DATABASES = {
         'NAME': f"{BASE_DIR}/example/example.sqlite3",
     }
 }
+
+DRF_REACT_TEMPLATE_TYPE_MAP = {
+    'ImageField': {'type': 'file'},
+}

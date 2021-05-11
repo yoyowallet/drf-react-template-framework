@@ -47,19 +47,19 @@ the framework has a large number of additional parameters which can be used to c
 
 ### Viewset
 
-All viewsets must inherit from `drf_react_template.mixins.FormSchemaViewSetMixin`. 
-This class inherits from the 
-DRF [`GenericViewSet`](https://www.django-rest-framework.org/api-guide/viewsets/#genericviewset), 
+All viewsets must inherit from `drf_react_template.mixins.FormSchemaViewSetMixin`.
+This class inherits from the
+DRF [`GenericViewSet`](https://www.django-rest-framework.org/api-guide/viewsets/#genericviewset),
 while additionally providing custom `finialize response functionality` and the additional endpoint:
 ```
 GET */create/
 >> {'serializer': ..., 'formData': {}}
 ```
-Which can be used to generate an empty form for create. 
+Which can be used to generate an empty form for create.
 
-The only other specific customization that can be applied in the viewset is different 
+The only other specific customization that can be applied in the viewset is different
 serializers for different endpoints. For example, `update` actions often show a subset of fields;
-as such it is possible to override `get_serializer_class` to return the specific form required. 
+as such it is possible to override `get_serializer_class` to return the specific form required.
 
 For example:
 ```python
@@ -89,8 +89,8 @@ the `serializer_list_class` class attribute provided by `FormSchemaViewSetMixin`
 
 ### Serializer
 
-The majority of the customization will occur inside serializer classes; 
-a real world example will often require custom `create`, `update`, `to_representation`, etc methods. 
+The majority of the customization will occur inside serializer classes;
+a real world example will often require custom `create`, `update`, `to_representation`, etc methods.
 
 At the class level the serializer defines the form name:
 ```
@@ -107,7 +107,7 @@ def __init__(self, *args, **kwargs):
 
 #### Serializer Field Attributes
 
-The following is a list of parameters that can be added to individual fields which modifies 
+The following is a list of parameters that can be added to individual fields which modifies
 `react-jsonschema-form` functionality on the front-end.
 
 ##### Label
@@ -122,7 +122,7 @@ choice_text = serializers.CharField(style={'ui:options': {'label': False}})
 Note: This does not work for `list` actions.
 
 ##### Read Only
-Setting `read_only=True` forces the encoder to skip it when building the form, 
+Setting `read_only=True` forces the encoder to skip it when building the form,
 but still means the value gets sent in the `formData`:
 ```python
 choice_text = serializers.CharField(read_only=True)
@@ -144,7 +144,7 @@ choice_text = serializers.CharField(allow_null=True)
 Note: This has no effect on `list` actions.
 
 ##### Default
-By setting a default value, a field is automatically set to `required=False`. 
+By setting a default value, a field is automatically set to `required=False`.
 The `formData` object will also contain the `default` value if it is not provided one.
 ```python
 choice_text = serializers.CharField(default='example text')
@@ -152,9 +152,9 @@ choice_text = serializers.CharField(default='example text')
 Note: This has no effect on `list` actions.
 
 ##### Style
-The DRF `style` parameter is a `dict` and is therefore used for a number of different parameters. 
-There are a [number of options](https://react-jsonschema-form.readthedocs.io/en/latest/api-reference/uiSchema/) 
-that `react-jsonschema-form` provides, many of which should work out-of-the-box, 
+The DRF `style` parameter is a `dict` and is therefore used for a number of different parameters.
+There are a [number of options](https://react-jsonschema-form.readthedocs.io/en/latest/api-reference/uiSchema/)
+that `react-jsonschema-form` provides, many of which should work out-of-the-box,
 although not all options will have been tested.
 
 Since style params are applied **last**, they can overwrite other keys. Additionally, any key not
@@ -172,7 +172,7 @@ def __init__(self, *args, **kwargs):
 
 ###### Dependencies
 
-`react-jsonschema-form` allows for the use of [dependencies](https://react-jsonschema-form.readthedocs.io/en/latest/usage/dependencies/#dependencies) 
+`react-jsonschema-form` allows for the use of [dependencies](https://react-jsonschema-form.readthedocs.io/en/latest/usage/dependencies/#dependencies)
 between multiple fields. This library has analogues for the four types (bidirectional, unidirectional, conditional, and
 dynamic).
 ```python
@@ -202,9 +202,9 @@ choice_text = serializers.ChoiceField(
 )
 ```
 
-###### Field Overrides 
+###### Field Overrides
 
-Since this framework doesn't cover 100% of the features of the `react-jsonschema-form`, it is possible to provide 
+Since this framework doesn't cover 100% of the features of the `react-jsonschema-form`, it is possible to provide
 `dict` objects which override the individual field properties:
 ```python
 choice_text = serializers.CharField(
@@ -221,7 +221,7 @@ choice_text = serializers.CharField(
 )
 ```
 **Note**: There is no validation around these overrides, so it is left up to the developer to ensure the resulting
-schema is valid. For example, `'schema:dependencies:override'` will not remove fields from the main `'properties'` or 
+schema is valid. For example, `'schema:dependencies:override'` will not remove fields from the main `'properties'` or
 `'required'` objects. (This can be done by omitting the dependant field from the serializer or using `read_only=True`).
 
 ###### List Sort Order
@@ -231,8 +231,8 @@ choice_text = serializers.CharField(, style={'schema:sort': 'ascend'})
 ```
 
 ###### Widget, Type, and Enum
-While the framework tries to provide sensible defaults for DRF fields, 
-sometimes custom frontend widgets need to provide custom behaviour. 
+While the framework tries to provide sensible defaults for DRF fields,
+sometimes custom frontend widgets need to provide custom behaviour.
 ```python
 choice_text = serializers.CharField(style={
     'ui:widget': 'textarea',
@@ -240,11 +240,11 @@ choice_text = serializers.CharField(style={
     'schema:enum': 'choices'
 })
 ```
-More information can be found on 
+More information can be found on
 [`types`](https://react-jsonschema-form.readthedocs.io/en/latest/usage/single/#field-types)
 and [`enum`](https://react-jsonschema-form.readthedocs.io/en/latest/usage/single/#enumerated-values).
 
-`enum` can also be set to the `string` `choices` (as in the example), 
+`enum` can also be set to the `string` `choices` (as in the example),
 to try and use the `field.choices` attribute.
 
 ###### Placeholder
@@ -260,10 +260,37 @@ choice_text = serializers.CharField(style={
     'ui:widget': 'textarea',
     'ui:options': {'rows': 8},
 })
-``` 
+```
 
 ###### Disabled
 An input field can be `disabled` in the following way:
 ```python
 choice_text = serializers.CharField(style={'ui:disabled': 'true'})
+```
+
+### Settings
+
+##### DRF_REACT_TEMPLATE_TYPE_MAP
+Allows for custom fields to be added to `ProcessingMixin.TYPE_MAP` in this way:
+```python
+DRF_REACT_TEMPLATE_TYPE_MAP = {
+    'ImageField': {'type': 'image', 'widget': 'file'},
+}
+```
+The default supported field types are:
+
+```python
+{
+    'CharField': {'type': 'string'},
+    'IntegerField': {'type': 'integer', 'widget': 'updown'},
+    'FloatField': {'type': 'number', 'widget': 'updown'},
+    'DecimalField': {'type': 'number', 'widget': 'updown'},
+    'BooleanField': {'type': 'boolean'},
+    'DateTimeField': {'type': 'string', 'widget': 'date-time'},
+    'DateField': {'type': 'string', 'widget': 'date'},
+    'URLField': {'type': 'string', 'widget': 'uri'},
+    'ChoiceField': {'type': 'string', 'enum': 'choices'},
+    'EmailField': {'type': 'string', 'widget': 'email'},
+    'ListField': {'type': 'array'},
+}
 ```
