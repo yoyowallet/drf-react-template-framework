@@ -21,7 +21,7 @@ class FormSchemaViewSetMixin(GenericViewSet):
         )
         if response.status_code in (status.HTTP_200_OK, status.HTTP_201_CREATED):
             response.data = {
-                'serializer': self.get_serializer_class()(),
+                'serializer': self.get_serializer(),
                 'formData': response.data,
             }
         return response
