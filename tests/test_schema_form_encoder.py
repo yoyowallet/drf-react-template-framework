@@ -131,6 +131,7 @@ def test_default():
     assert result['properties']['choice_text']['default'] == new_default
     assert 'choice_text' not in result['required']
 
+
 def test_min_length():
     class MinLengthSerializer(ChoiceSerializer):
         choice_text = serializers.CharField(min_length=3)
@@ -138,12 +139,14 @@ def test_min_length():
     result = SchemaProcessor(MinLengthSerializer(), {}).get_schema()
     assert 'minLength' in result['properties']['choice_text']
 
+
 def test_max_length():
     class MaxLengthSerializer(ChoiceSerializer):
         choice_text = serializers.CharField(max_length=50)
 
     result = SchemaProcessor(MaxLengthSerializer(), {}).get_schema()
     assert 'maxLength' in result['properties']['choice_text']
+
 
 def test_choice_custom_widget_and_type():
     new_widget = 'CustomWidget'

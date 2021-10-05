@@ -68,9 +68,7 @@ class ProcessingMixin:
         self.renderer_context = renderer_context
         self.prefix = prefix
         self.extra_types = extra_types
-        self.extra_types.update(
-            getattr(settings, 'DRF_REACT_TEMPLATE_TYPE_MAP', {})
-        )
+        self.extra_types.update(getattr(settings, 'DRF_REACT_TEMPLATE_TYPE_MAP', {}))
         self.TYPE_MAP.update(self.extra_types)
 
     def _get_type_map_value(self, field: SerializerType):
