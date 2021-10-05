@@ -153,7 +153,7 @@ Note: This has no effect on `list` actions.
 
 ##### Min and Max Length
 Optionally validates the text to be shorter than max_length and longer than min_length
-By setting the json-schema property will contain `minLength` and `maxLength` attributes. The rendered html input will contain the maxlength and minlength attributes. 
+by setting the json-schema property will contain `minLength` and `maxLength` attributes. The rendered html input will contain the maxlength and minlength attributes. 
 ```python
 choice_text = serializers.CharField(min_length=3, max_length=100)
 ```
