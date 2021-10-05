@@ -165,6 +165,11 @@ class SchemaProcessor(ProcessingMixin):
                 result['minItems'] = field.min_length
             result['items'] = self._get_field_properties(field.child, "")
             result['uniqueItems'] = True
+        elif isinstance(field, serializers.CharField):
+            if field.min_length:
+                result['minLength'] = field.min_length
+            if field.max_length:
+                result['maxLength'] = field.max_length
         else:
             if field.allow_null:
                 result['type'] = [result['type'], 'null']
