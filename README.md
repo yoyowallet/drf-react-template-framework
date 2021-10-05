@@ -302,3 +302,12 @@ The default supported field types are:
     'ListField': {'type': 'array'},
 }
 ```
+
+## Development
+
+This Repo uses [Poetry](https://python-poetry.org/docs/), 
+and setup for development is as simple as follows:
+```bash
+poetry init
+pre-commit install 
+```
