@@ -151,6 +151,14 @@ choice_text = serializers.CharField(default='example text')
 ```
 Note: This has no effect on `list` actions.
 
+##### Min and Max Length
+Optionally validates the text to be shorter than max_length and longer than min_length
+by setting the json-schema property will contain `minLength` and `maxLength` attributes. The rendered html input will contain the maxlength and minlength attributes. 
+```python
+choice_text = serializers.CharField(min_length=3, max_length=100)
+```
+Note: This has no effect on `list` actions.
+
 ##### Style
 The DRF `style` parameter is a `dict` and is therefore used for a number of different parameters.
 There are a [number of options](https://react-jsonschema-form.readthedocs.io/en/latest/api-reference/uiSchema/)
@@ -293,4 +301,13 @@ The default supported field types are:
     'EmailField': {'type': 'string', 'widget': 'email'},
     'ListField': {'type': 'array'},
 }
+```
+
+## Development
+
+This Repo uses [Poetry](https://python-poetry.org/docs/), 
+and setup for development is as simple as follows:
+```bash
+poetry init
+pre-commit install 
 ```
