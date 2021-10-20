@@ -184,6 +184,12 @@ class SchemaProcessor(ProcessingMixin):
                     else:
                         result['enum'] = enum
                         result['enumNames'] = [item for item in enum]
+            field_validators = {
+                v.code: v.message for v in field.validators
+                if getattr(v, 'is_custom', False)
+            }
+            if field_validators:
+                result['validators'] = field_validators
             try:
                 result['default'] = field.get_default()
             except fields.SkipField:

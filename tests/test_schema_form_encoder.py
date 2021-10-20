@@ -1,3 +1,4 @@
+from django.utils.translation import gettext_lazy as _
 import pytest
 from rest_framework import serializers
 
@@ -13,6 +14,7 @@ from drf_react_template.schema_form_encoder import (
     SchemaProcessor,
     UiSchemaProcessor,
 )
+from drf_react_template import validators
 from example.polls.serializers import (
     ChoiceSerializer,
     QuestionListSerializer,
@@ -418,3 +420,32 @@ def test_extra_field_type(custom_field_type_expected_schema):
         CustomFieldTypeSerializer(), {}, extra_types={'UUIDField': {'type': 'uuid'}}
     ).get_schema()
     assert result['properties'] == custom_field_type_expected_schema
+
+
+def test_validation_uischema():
+
+    class MinSizeImageValidator(validators.CustomValidator):
+        message = _('Image is too small')
+        code = 'minsize_image_not_allowed'
+
+        def __init__(self, message=None):
+            self.message = message or self.message
+
+        def __call__(self, value):
+            min_size = 1024  # 1KB
+            if value.size < min_size:
+                raise serializers.ValidationError(self.message, code=self.code)
+
+    class CustomValidationSerializer(ChoiceSerializer):
+        image_field = serializers.ImageField(
+            required=True, validators=[MinSizeImageValidator]
+        )
+        char_field = serializers.CharField(
+            required=True, min_length=3, max_length=10
+        )
+
+    # serializer = CustomValidationSerializer()
+    result = SchemaProcessor(CustomValidationSerializer(), {}).get_schema()
+    assert result['properties']['image_field']['validators'] == {
+        'minsize_image_not_allowed': 'Image is too small'
+    }
