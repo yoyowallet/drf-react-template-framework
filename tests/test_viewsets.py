@@ -50,6 +50,3 @@ def test_question_and_choice_viewset_create(
         response_obj['serializer']['uiSchema']
         == question_and_choice_retrieve_expected_ui_schema
     )
-
-    import pprint
-    pprint.pprint(response_obj)
