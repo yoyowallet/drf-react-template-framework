@@ -3,6 +3,7 @@ from typing import Any, Dict, List, Tuple, Union
 
 from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
+from django.core import validators
 from rest_framework import fields, serializers
 
 SerializerType = Union[
@@ -35,6 +36,14 @@ DEPENDENCY_KEYS = {
 STYLE_KEYS_TO_IGNORE = {
     *OVERRIDE_KEYS,
     *DEPENDENCY_KEYS,
+}
+
+VALIDATION_MAP = {
+    validators.MaxLengthValidator: ['maxLength', lambda v: v.limit_value],
+    validators.MinLengthValidator: ['minLength', lambda v: v.limit_value],
+    validators.MaxValueValidator: ['maximum', lambda v: v.limit_value],
+    validators.MinValueValidator: ['minimum', lambda v: v.limit_value],
+    validators.RegexValidator: ['pattern', lambda v: v.regex.pattern]
 }
 
 
@@ -155,8 +164,11 @@ class SchemaProcessor(ProcessingMixin):
 
     def _set_validation_properties(self, field: SerializerType, result: Dict[str, Any]) -> Dict[str, Any]:
         for validator in field.validators:
-            if hasattr(validator, 'regex'):
-                result['regex'] = validator.regex.pattern
+            for validator_class, attr_value in VALIDATION_MAP.items():
+                if isinstance(validator, validator_class):
+                    result_key, result_filter = attr_value
+                    result[result_key] = result_filter(validator)
+
         return result
 
 
@@ -171,11 +183,6 @@ class SchemaProcessor(ProcessingMixin):
             result['items'] = self._get_field_properties(field.child, "")
             result['uniqueItems'] = True
         else:
-            if isinstance(field, serializers.CharField):
-                if field.min_length:
-                    result['minLength'] = field.min_length
-                if field.max_length:
-                    result['maxLength'] = field.max_length
             if field.allow_null:
                 result['type'] = [result['type'], 'null']
             enum = type_map_obj.get('enum')

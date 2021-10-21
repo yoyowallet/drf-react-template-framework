@@ -134,22 +134,6 @@ def test_default():
     assert 'choice_text' not in result['required']
 
 
-def test_min_length():
-    class MinLengthSerializer(ChoiceSerializer):
-        choice_text = serializers.CharField(min_length=3)
-
-    result = SchemaProcessor(MinLengthSerializer(), {}).get_schema()
-    assert 'minLength' in result['properties']['choice_text']
-
-
-def test_max_length():
-    class MaxLengthSerializer(ChoiceSerializer):
-        choice_text = serializers.CharField(max_length=50)
-
-    result = SchemaProcessor(MaxLengthSerializer(), {}).get_schema()
-    assert 'maxLength' in result['properties']['choice_text']
-
-
 def test_choice_custom_widget_and_type():
     new_widget = 'CustomWidget'
     new_type = 'CustomType'
@@ -422,7 +406,7 @@ def test_extra_field_type(custom_field_type_expected_schema):
     assert result['properties'] == custom_field_type_expected_schema
 
 
-def test_validation_uischema():
+def test_validation_schema():
 
     class MinSizeImageValidator(validators.CustomValidator):
         message = _('Image is too small')
@@ -434,14 +418,18 @@ def test_validation_uischema():
                 raise serializers.ValidationError(self.message, code=self.code)
 
     class CustomValidationSerializer(ChoiceSerializer):
+        char_text = serializers.CharField(min_length=5, max_length=10)
+        int_field = serializers.IntegerField(min_value=3, max_value=7)
+        regex_field = serializers.RegexField(regex=r'^[a-zA-Z]+$', required=True)
         image_field = serializers.ImageField(
             required=True, validators=[MinSizeImageValidator]
         )
-        regex_field = serializers.RegexField(regex=r'^[a-zA-Z]+$', required=True)
 
-    # serializer = CustomValidationSerializer()
     result = SchemaProcessor(CustomValidationSerializer(), {}).get_schema()
-    # assert result['properties']['image_field']['validators'] == {
-    #     'minsize_image_not_allowed': 'Image is too small'
-    # }
-    assert result['properties']['regex_field']['regex'] == '^[a-zA-Z]+$'
+
+    assert result['properties']['regex_field']['pattern'] == '^[a-zA-Z]+$'
+    assert result['properties']['char_text']['maxLength'] == 10
+    assert result['properties']['char_text']['minLength'] == 5
+    assert result['properties']['int_field']['maximum'] == 7
+    assert result['properties']['int_field']['minimum'] == 3
+
