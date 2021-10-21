@@ -1,7 +1,6 @@
 class CustomValidator:
     message = None
     code = None
-    is_custom = True
 
     def __init__(self, code=None, message=None):
         self.code = code or self.code

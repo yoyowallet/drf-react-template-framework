@@ -428,9 +428,6 @@ def test_validation_uischema():
         message = _('Image is too small')
         code = 'minsize_image_not_allowed'
 
-        def __init__(self, message=None):
-            self.message = message or self.message
-
         def __call__(self, value):
             min_size = 1024  # 1KB
             if value.size < min_size:
@@ -440,12 +437,11 @@ def test_validation_uischema():
         image_field = serializers.ImageField(
             required=True, validators=[MinSizeImageValidator]
         )
-        char_field = serializers.CharField(
-            required=True, min_length=3, max_length=10
-        )
+        regex_field = serializers.RegexField(regex=r'^[a-zA-Z]+$', required=True)
 
     # serializer = CustomValidationSerializer()
     result = SchemaProcessor(CustomValidationSerializer(), {}).get_schema()
-    assert result['properties']['image_field']['validators'] == {
-        'minsize_image_not_allowed': 'Image is too small'
-    }
+    # assert result['properties']['image_field']['validators'] == {
+    #     'minsize_image_not_allowed': 'Image is too small'
+    # }
+    assert result['properties']['regex_field']['regex'] == '^[a-zA-Z]+$'

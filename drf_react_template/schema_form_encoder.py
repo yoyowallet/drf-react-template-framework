@@ -153,6 +153,13 @@ class SchemaProcessor(ProcessingMixin):
             if field.required and not self._is_field_serializer(field)
         ]
 
+    def _set_validation_properties(self, field: SerializerType, result: Dict[str, Any]) -> Dict[str, Any]:
+        for validator in field.validators:
+            if hasattr(validator, 'regex'):
+                result['regex'] = validator.regex.pattern
+        return result
+
+
     def _get_field_properties(self, field: SerializerType, name: str) -> Dict[str, Any]:
         result = {}
         type_map_obj = self._get_type_map_value(field)
@@ -184,12 +191,7 @@ class SchemaProcessor(ProcessingMixin):
                     else:
                         result['enum'] = enum
                         result['enumNames'] = [item for item in enum]
-            field_validators = {
-                v.code: v.message for v in field.validators
-                if getattr(v, 'is_custom', False)
-            }
-            if field_validators:
-                result['validators'] = field_validators
+            result = self._set_validation_properties(field, result)
             try:
                 result['default'] = field.get_default()
             except fields.SkipField:
