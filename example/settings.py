@@ -52,5 +52,5 @@ DATABASES = {
 }
 
 DRF_REACT_TEMPLATE_TYPE_MAP = {
-    'ImageField': {'type': 'file'},
+    'ImageField': {'type': 'file', 'widget': 'file'},
 }

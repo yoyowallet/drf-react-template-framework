@@ -14,7 +14,6 @@ from drf_react_template.schema_form_encoder import (
     SchemaProcessor,
     UiSchemaProcessor,
 )
-from drf_react_template import validators
 from example.polls.serializers import (
     ChoiceSerializer,
     QuestionListSerializer,
@@ -408,9 +407,9 @@ def test_extra_field_type(custom_field_type_expected_schema):
 
 def test_validation_schema():
 
-    class MinSizeImageValidator(validators.CustomValidator):
-        message = _('Image is too small')
-        code = 'minsize_image_not_allowed'
+    class MinSizeImageValidator:
+        message = _('Image is too small, must be 1KB minimum.')
+        code = 'image_min_1KB'
 
         def __call__(self, value):
             min_size = 1024  # 1KB
@@ -432,4 +431,11 @@ def test_validation_schema():
     assert result['properties']['char_text']['minLength'] == 5
     assert result['properties']['int_field']['maximum'] == 7
     assert result['properties']['int_field']['minimum'] == 3
+
+    ui_result = UiSchemaProcessor(CustomValidationSerializer(), {}).get_ui_schema()
+
+    assert 'ui:custom-validators' not in ui_result['char_text']
+    assert ui_result['image_field']['ui:custom-validators'] == [
+        {'code': 'image_min_1KB', 'message': 'Image is too small, must be 1KB minimum.'}
+    ]
 

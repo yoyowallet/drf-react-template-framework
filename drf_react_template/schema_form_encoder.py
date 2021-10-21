@@ -5,6 +5,7 @@ from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
 from django.core import validators
 from rest_framework import fields, serializers
+from rest_framework import validators as drf_validators
 
 SerializerType = Union[
     serializers.BaseSerializer,
@@ -46,6 +47,11 @@ VALIDATION_MAP = {
     validators.RegexValidator: ['pattern', lambda v: v.regex.pattern]
 }
 
+EXCLUDED_VALIDATOR_CLASSES = [
+    validators.ProhibitNullCharactersValidator,
+    drf_validators.ProhibitSurrogateCharactersValidator
+]
+
 
 class ProcessingMixin:
     TYPE_MAP: Dict[str, Dict[str, str]] = {
@@ -59,6 +65,8 @@ class ProcessingMixin:
         'URLField': {'type': 'string', 'widget': 'uri'},
         'ChoiceField': {'type': 'string', 'enum': 'choices'},
         'EmailField': {'type': 'string', 'widget': 'email'},
+        'RegexField': {'type': 'string', 'widget': 'regex'},
+        'ImageField': {'type': 'file', 'widget': 'file'},
         'ListField': {'type': 'array'},
     }
 
@@ -162,7 +170,9 @@ class SchemaProcessor(ProcessingMixin):
             if field.required and not self._is_field_serializer(field)
         ]
 
-    def _set_validation_properties(self, field: SerializerType, result: Dict[str, Any]) -> Dict[str, Any]:
+    def _set_validation_properties(
+        self, field: SerializerType, result: Dict[str, Any]
+    ) -> Dict[str, Any]:
         for validator in field.validators:
             for validator_class, attr_value in VALIDATION_MAP.items():
                 if isinstance(validator, validator_class):
@@ -391,6 +401,24 @@ class UiSchemaProcessor(ProcessingMixin):
                 style_dict[k] = v
         return style_dict
 
+    def _set_validation_properties(
+        self, field: SerializerType, result: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        excluded_validators = tuple(
+            EXCLUDED_VALIDATOR_CLASSES + list(VALIDATION_MAP.keys())
+        )
+        custom_validators = [
+            v for v in field.validators
+            if not isinstance(v, excluded_validators)
+        ]
+        if custom_validators:
+            result['ui:custom-validators'] = [
+                {'code': v.code, 'message': v.message}
+                for v in custom_validators
+            ]
+
+        return result
+
     def _get_ui_field_properties(
         self, field: SerializerType, name: str
     ) -> Dict[str, Any]:
@@ -413,6 +441,7 @@ class UiSchemaProcessor(ProcessingMixin):
         if help_text:
             result['ui:help'] = help_text
         result.update(self._get_style_dict(field))
+        result = self._set_validation_properties(field, result)
         return result
 
     def _get_all_ui_properties(self) -> Dict[str, Any]:
