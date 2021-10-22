@@ -188,8 +188,8 @@ class SchemaProcessor(ProcessingMixin):
         result['type'] = type_map_obj['type']
         result['title'] = self._get_title(field, name)
         if isinstance(field, serializers.ListField):
-            if field.min_length:
-                result['minItems'] = field.min_length
+            if field.allow_empty:
+                result['required'] = not getattr(field, 'allow_empty', True)
             result['items'] = self._get_field_properties(field.child, "")
             result['uniqueItems'] = True
         else:
@@ -208,11 +208,13 @@ class SchemaProcessor(ProcessingMixin):
                     else:
                         result['enum'] = enum
                         result['enumNames'] = [item for item in enum]
-            result = self._set_validation_properties(field, result)
             try:
                 result['default'] = field.get_default()
             except fields.SkipField:
                 pass
+
+        result = self._set_validation_properties(field, result)
+
         return result
 
     def _get_all_field_properties(self) -> Dict[str, Any]:

@@ -407,6 +407,8 @@ def test_extra_field_type(custom_field_type_expected_schema):
 
 def test_validation_schema():
 
+    # TODO: Look into UniqueValidators, Update the docs and look into IFELSE schema logic
+
     class MinSizeImageValidator:
         message = _('Image is too small, must be 1KB minimum.')
         code = 'image_min_1KB'
@@ -423,6 +425,10 @@ def test_validation_schema():
         image_field = serializers.ImageField(
             required=True, validators=[MinSizeImageValidator]
         )
+        list_field = serializers.ListField(
+            child=serializers.IntegerField(min_value=0, max_value=100),
+            min_length=1, max_length=5, allow_empty=True
+        )
 
     result = SchemaProcessor(CustomValidationSerializer(), {}).get_schema()
 
@@ -431,6 +437,9 @@ def test_validation_schema():
     assert result['properties']['char_text']['minLength'] == 5
     assert result['properties']['int_field']['maximum'] == 7
     assert result['properties']['int_field']['minimum'] == 3
+    assert result['properties']['list_field']['maxLength'] == 5
+    assert result['properties']['list_field']['minLength'] == 1
+    assert result['properties']['list_field']['required'] == False
 
     ui_result = UiSchemaProcessor(CustomValidationSerializer(), {}).get_ui_schema()
 
