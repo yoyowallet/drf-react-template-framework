@@ -151,13 +151,58 @@ choice_text = serializers.CharField(default='example text')
 ```
 Note: This has no effect on `list` actions.
 
-##### Min and Max Length
-Optionally validates the text to be shorter than max_length and longer than min_length
-by setting the json-schema property will contain `minLength` and `maxLength` attributes. The rendered html input will contain the maxlength and minlength attributes. 
+##### Validation Mapping
+Built-in validators are automatically added to the schema. For instance:
 ```python
-choice_text = serializers.CharField(min_length=3, max_length=100)
+char_text = serializers.CharField(min_length=5, max_length=10)
 ```
-Note: This has no effect on `list` actions.
+
+Will result in the following schema portion:
+
+```json
+{
+    "type": "string",
+    "title": "Char text",
+    "maxLength": 10,
+    "minLength": 5
+}
+```
+
+The following core validators have mapping to json schema (https://ajv.js.org/json-schema.html):
+
+- MaxLengthValidator: maxLength
+- MinLengthValidator: minLength
+- MaxValueValidator: maximum
+- MinValueValidator: minimum
+- RegexValidator: pattern
+
+Custom validators can not be mapped directly to Ajv schema properies so they are rather provided in the json ui schema as hints.
+
+```python
+class MinSizeImageValidator:
+    message = _('Image is too small, must be 1KB minimum.')
+    code = 'image_min_1KB'
+
+    def __call__(self, value):
+        min_size = 1024  # 1KB
+        if value.size < min_size:
+            raise serializers.ValidationError(self.message, code=self.code)
+
+image_field = serializers.ImageField(
+    required=True, validators=[MinSizeImageValidator]
+)
+```
+
+Will result in the following ui schema portion:
+
+```json
+{
+    "ui:widget": "file",
+    "ui:custom-validators": [
+        {"code": "image_min_1KB", "message": "Image is too small, must be 1KB minimum."}
+    ]
+}
+```
 
 ##### Style
 The DRF `style` parameter is a `dict` and is therefore used for a number of different parameters.
@@ -305,9 +350,9 @@ The default supported field types are:
 
 ## Development
 
-This Repo uses [Poetry](https://python-poetry.org/docs/), 
+This Repo uses [Poetry](https://python-poetry.org/docs/),
 and setup for development is as simple as follows:
 ```bash
 poetry init
-pre-commit install 
+pre-commit install
 ```

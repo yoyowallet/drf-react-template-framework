@@ -407,8 +407,6 @@ def test_extra_field_type(custom_field_type_expected_schema):
 
 def test_validation_schema():
 
-    # TODO: Look into UniqueValidators, Update the docs and look into IFELSE schema logic
-
     class MinSizeImageValidator:
         message = _('Image is too small, must be 1KB minimum.')
         code = 'image_min_1KB'
@@ -442,6 +440,8 @@ def test_validation_schema():
     assert result['properties']['list_field']['required'] == False
 
     ui_result = UiSchemaProcessor(CustomValidationSerializer(), {}).get_ui_schema()
+
+    breakpoint()
 
     assert 'ui:custom-validators' not in ui_result['char_text']
     assert ui_result['image_field']['ui:custom-validators'] == [
