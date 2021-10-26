@@ -108,6 +108,7 @@ env/
 venv/
 ENV/
 env.bak/
+.python-version
 venv.bak/
 
 # Spyder project settings

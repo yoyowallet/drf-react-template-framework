@@ -3,7 +3,9 @@ from typing import Any, Dict, List, Tuple, Union
 
 from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
+from django.core import validators
 from rest_framework import fields, serializers
+from rest_framework import validators as drf_validators
 
 SerializerType = Union[
     serializers.BaseSerializer,
@@ -37,6 +39,19 @@ STYLE_KEYS_TO_IGNORE = {
     *DEPENDENCY_KEYS,
 }
 
+VALIDATION_MAP = {
+    validators.MaxLengthValidator: ['maxLength', lambda v: v.limit_value],
+    validators.MinLengthValidator: ['minLength', lambda v: v.limit_value],
+    validators.MaxValueValidator: ['maximum', lambda v: v.limit_value],
+    validators.MinValueValidator: ['minimum', lambda v: v.limit_value],
+    validators.RegexValidator: ['pattern', lambda v: v.regex.pattern]
+}
+
+EXCLUDED_VALIDATOR_CLASSES = [
+    validators.ProhibitNullCharactersValidator,
+    drf_validators.ProhibitSurrogateCharactersValidator
+]
+
 
 class ProcessingMixin:
     TYPE_MAP: Dict[str, Dict[str, str]] = {
@@ -50,6 +65,8 @@ class ProcessingMixin:
         'URLField': {'type': 'string', 'widget': 'uri'},
         'ChoiceField': {'type': 'string', 'enum': 'choices'},
         'EmailField': {'type': 'string', 'widget': 'email'},
+        'RegexField': {'type': 'string', 'widget': 'regex'},
+        'ImageField': {'type': 'file', 'widget': 'file'},
         'ListField': {'type': 'array'},
     }
 
@@ -153,22 +170,29 @@ class SchemaProcessor(ProcessingMixin):
             if field.required and not self._is_field_serializer(field)
         ]
 
+    def _set_validation_properties(
+        self, field: SerializerType, result: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        for validator in field.validators:
+            for validator_class, attr_value in VALIDATION_MAP.items():
+                if isinstance(validator, validator_class):
+                    result_key, result_filter = attr_value
+                    result[result_key] = result_filter(validator)
+
+        return result
+
+
     def _get_field_properties(self, field: SerializerType, name: str) -> Dict[str, Any]:
         result = {}
         type_map_obj = self._get_type_map_value(field)
         result['type'] = type_map_obj['type']
         result['title'] = self._get_title(field, name)
         if isinstance(field, serializers.ListField):
-            if field.min_length:
-                result['minItems'] = field.min_length
+            if field.allow_empty:
+                result['required'] = not getattr(field, 'allow_empty', True)
             result['items'] = self._get_field_properties(field.child, "")
             result['uniqueItems'] = True
         else:
-            if isinstance(field, serializers.CharField):
-                if field.min_length:
-                    result['minLength'] = field.min_length
-                if field.max_length:
-                    result['maxLength'] = field.max_length
             if field.allow_null:
                 result['type'] = [result['type'], 'null']
             enum = type_map_obj.get('enum')
@@ -188,6 +212,9 @@ class SchemaProcessor(ProcessingMixin):
                 result['default'] = field.get_default()
             except fields.SkipField:
                 pass
+
+        result = self._set_validation_properties(field, result)
+
         return result
 
     def _get_all_field_properties(self) -> Dict[str, Any]:
@@ -376,6 +403,24 @@ class UiSchemaProcessor(ProcessingMixin):
                 style_dict[k] = v
         return style_dict
 
+    def _set_validation_properties(
+        self, field: SerializerType, result: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        excluded_validators = tuple(
+            EXCLUDED_VALIDATOR_CLASSES + list(VALIDATION_MAP.keys())
+        )
+        custom_validators = [
+            v for v in field.validators
+            if not isinstance(v, excluded_validators)
+        ]
+        if custom_validators:
+            result['ui:custom-validators'] = [
+                {'code': v.code, 'message': v.message}
+                for v in custom_validators
+            ]
+
+        return result
+
     def _get_ui_field_properties(
         self, field: SerializerType, name: str
     ) -> Dict[str, Any]:
@@ -398,6 +443,7 @@ class UiSchemaProcessor(ProcessingMixin):
         if help_text:
             result['ui:help'] = help_text
         result.update(self._get_style_dict(field))
+        result = self._set_validation_properties(field, result)
         return result
 
     def _get_all_ui_properties(self) -> Dict[str, Any]:

@@ -1,3 +1,4 @@
+from django.utils.translation import gettext_lazy as _
 import pytest
 from rest_framework import serializers
 
@@ -130,22 +131,6 @@ def test_default():
     result = SchemaProcessor(DefaultSerializer(), {}).get_schema()
     assert result['properties']['choice_text']['default'] == new_default
     assert 'choice_text' not in result['required']
-
-
-def test_min_length():
-    class MinLengthSerializer(ChoiceSerializer):
-        choice_text = serializers.CharField(min_length=3)
-
-    result = SchemaProcessor(MinLengthSerializer(), {}).get_schema()
-    assert 'minLength' in result['properties']['choice_text']
-
-
-def test_max_length():
-    class MaxLengthSerializer(ChoiceSerializer):
-        choice_text = serializers.CharField(max_length=50)
-
-    result = SchemaProcessor(MaxLengthSerializer(), {}).get_schema()
-    assert 'maxLength' in result['properties']['choice_text']
 
 
 def test_choice_custom_widget_and_type():
@@ -418,3 +403,48 @@ def test_extra_field_type(custom_field_type_expected_schema):
         CustomFieldTypeSerializer(), {}, extra_types={'UUIDField': {'type': 'uuid'}}
     ).get_schema()
     assert result['properties'] == custom_field_type_expected_schema
+
+
+def test_validation_schema():
+
+    class MinSizeImageValidator:
+        message = _('Image is too small, must be 1KB minimum.')
+        code = 'image_min_1KB'
+
+        def __call__(self, value):
+            min_size = 1024  # 1KB
+            if value.size < min_size:
+                raise serializers.ValidationError(self.message, code=self.code)
+
+    class CustomValidationSerializer(ChoiceSerializer):
+        char_text = serializers.CharField(min_length=5, max_length=10)
+        int_field = serializers.IntegerField(min_value=3, max_value=7)
+        regex_field = serializers.RegexField(regex=r'^[a-zA-Z]+$', required=True)
+        image_field = serializers.ImageField(
+            required=True, validators=[MinSizeImageValidator]
+        )
+        list_field = serializers.ListField(
+            child=serializers.IntegerField(min_value=0, max_value=100),
+            min_length=1, max_length=5, allow_empty=True
+        )
+
+    result = SchemaProcessor(CustomValidationSerializer(), {}).get_schema()
+
+    assert result['properties']['regex_field']['pattern'] == '^[a-zA-Z]+$'
+    assert result['properties']['char_text']['maxLength'] == 10
+    assert result['properties']['char_text']['minLength'] == 5
+    assert result['properties']['int_field']['maximum'] == 7
+    assert result['properties']['int_field']['minimum'] == 3
+    assert result['properties']['list_field']['maxLength'] == 5
+    assert result['properties']['list_field']['minLength'] == 1
+    assert result['properties']['list_field']['required'] == False
+
+    ui_result = UiSchemaProcessor(CustomValidationSerializer(), {}).get_ui_schema()
+
+    breakpoint()
+
+    assert 'ui:custom-validators' not in ui_result['char_text']
+    assert ui_result['image_field']['ui:custom-validators'] == [
+        {'code': 'image_min_1KB', 'message': 'Image is too small, must be 1KB minimum.'}
+    ]
+
