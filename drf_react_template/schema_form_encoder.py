@@ -2,8 +2,8 @@ import re
 from typing import Any, Dict, List, Tuple, Union
 
 from django.conf import settings
-from django.core.serializers.json import DjangoJSONEncoder
 from django.core import validators
+from django.core.serializers.json import DjangoJSONEncoder
 from rest_framework import fields, serializers
 from rest_framework import validators as drf_validators
 
@@ -44,12 +44,12 @@ VALIDATION_MAP = {
     validators.MinLengthValidator: ['minLength', lambda v: v.limit_value],
     validators.MaxValueValidator: ['maximum', lambda v: v.limit_value],
     validators.MinValueValidator: ['minimum', lambda v: v.limit_value],
-    validators.RegexValidator: ['pattern', lambda v: v.regex.pattern]
+    validators.RegexValidator: ['pattern', lambda v: v.regex.pattern],
 }
 
 EXCLUDED_VALIDATOR_CLASSES = [
     validators.ProhibitNullCharactersValidator,
-    drf_validators.ProhibitSurrogateCharactersValidator
+    drf_validators.ProhibitSurrogateCharactersValidator,
 ]
 
 
@@ -180,7 +180,6 @@ class SchemaProcessor(ProcessingMixin):
                     result[result_key] = result_filter(validator)
 
         return result
-
 
     def _get_field_properties(self, field: SerializerType, name: str) -> Dict[str, Any]:
         result = {}
@@ -410,13 +409,11 @@ class UiSchemaProcessor(ProcessingMixin):
             EXCLUDED_VALIDATOR_CLASSES + list(VALIDATION_MAP.keys())
         )
         custom_validators = [
-            v for v in field.validators
-            if not isinstance(v, excluded_validators)
+            v for v in field.validators if not isinstance(v, excluded_validators)
         ]
         if custom_validators:
             result['ui:custom-validators'] = [
-                {'code': v.code, 'message': v.message}
-                for v in custom_validators
+                {'code': v.code, 'message': v.message} for v in custom_validators
             ]
 
         return result

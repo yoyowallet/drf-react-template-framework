@@ -1,5 +1,5 @@
-from django.utils.translation import gettext_lazy as _
 import pytest
+from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
 from drf_react_template.schema_form_encoder import (
@@ -406,7 +406,6 @@ def test_extra_field_type(custom_field_type_expected_schema):
 
 
 def test_validation_schema():
-
     class MinSizeImageValidator:
         message = _('Image is too small, must be 1KB minimum.')
         code = 'image_min_1KB'
@@ -425,7 +424,9 @@ def test_validation_schema():
         )
         list_field = serializers.ListField(
             child=serializers.IntegerField(min_value=0, max_value=100),
-            min_length=1, max_length=5, allow_empty=True
+            min_length=1,
+            max_length=5,
+            allow_empty=True,
         )
 
     result = SchemaProcessor(CustomValidationSerializer(), {}).get_schema()
@@ -437,14 +438,11 @@ def test_validation_schema():
     assert result['properties']['int_field']['minimum'] == 3
     assert result['properties']['list_field']['maxLength'] == 5
     assert result['properties']['list_field']['minLength'] == 1
-    assert result['properties']['list_field']['required'] == False
+    assert result['properties']['list_field']['required'] is False
 
     ui_result = UiSchemaProcessor(CustomValidationSerializer(), {}).get_ui_schema()
-
-    breakpoint()
 
     assert 'ui:custom-validators' not in ui_result['char_text']
     assert ui_result['image_field']['ui:custom-validators'] == [
         {'code': 'image_min_1KB', 'message': 'Image is too small, must be 1KB minimum.'}
     ]
-
