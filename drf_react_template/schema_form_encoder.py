@@ -412,9 +412,12 @@ class UiSchemaProcessor(ProcessingMixin):
             v for v in field.validators if not isinstance(v, excluded_validators)
         ]
         if custom_validators:
-            result['ui:custom-validators'] = [
-                {'code': v.code, 'message': v.message} for v in custom_validators
-            ]
+            result['ui:custom-validators'] = []
+            for v in custom_validators:
+                code = f'{v}'
+                if hasattr(v, 'code'):
+                    code = v.code 
+                result['ui:custom-validators'].append({'code': code, 'message': v.message} )
 
         return result
 
