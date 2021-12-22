@@ -144,9 +144,9 @@ class SchemaProcessor(ProcessingMixin):
 
     def _is_serializer_optional(self) -> bool:
         return (
-            self.serializer.allow_empty or
-            (not self.serializer.required) or
-            self.serializer.allow_null
+            self.serializer.allow_empty
+            or (not self.serializer.required)
+            or self.serializer.allow_null
         )
 
     def _get_serializer_title(self) -> str:
@@ -415,7 +415,7 @@ class UiSchemaProcessor(ProcessingMixin):
             result['ui:custom-validators'] = [
                 {
                     'code': getattr(v, 'code', v.__class__.__name__.lower()),
-                    'message': getattr(v, 'message')
+                    'message': getattr(v, 'message'),
                 }
                 for v in custom_validators
             ]
