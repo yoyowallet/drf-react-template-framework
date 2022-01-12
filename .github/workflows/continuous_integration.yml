@@ -32,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python: [3.7.12, 3.8.12, 3.9.9, 3.10.0]
+        python: [3.10.0]
       fail-fast: false
 
     steps:
@@ -53,6 +53,7 @@ jobs:
           poetry-${{ hashFiles('**/poetry.lock') }}
     - name: Install Dependencies
       run: poetry install
+      if: steps.cache.outputs.cache-hit != 'true'
     - name: Test with pytest
       run: |
         poetry run pytest --cov
