@@ -16,7 +16,7 @@ jobs:
         uses: pre-commit/action@v2.0.0
 
   test:
-    needs: linting
+    needs: lint
     runs-on: ubuntu-latest
     strategy:
       matrix:
