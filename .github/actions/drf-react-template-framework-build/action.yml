@@ -1,21 +1,29 @@
-name: 'Hello World'
-description: 'Greet someone'
+name: 'DRF React Template Framework Build'
+description: 'DRF React Template Framework build steps'
 inputs:
-  who-to-greet:  # id of input
-    description: 'Who to greet'
+  python-version:
+    description: 'Python  version to use'
     required: true
-    default: 'World'
-outputs:
-  random-number:
-    description: "Random number"
-    value: ${{ steps.random-number-generator.outputs.random-id }}
+    default: '3.10'
 runs:
   using: "composite"
   steps:
-    - run: echo Hello ${{ inputs.who-to-greet }}.
-      shell: bash
-    - id: random-number-generator
-      run: echo "::set-output name=random-id::$(echo $RANDOM)"
-      shell: bash
-    - run: ${{ github.action_path }}/goodbye.sh
-      shell: bash
+    - name: Set up Python ${{ input.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ input.python-version }}
+    - name: Install Poetry
+      uses: snok/install-poetry@v1.3
+      with:
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+        installer-parallel: true
+    - name: Load cached venv
+      id: cached-poetry-dependencies
+      uses: actions/cache@v2
+      with:
+        path: .venv
+        key: venv-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+    - name: Install dependencies
+      if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+      run: poetry install --no-interaction --no-root
