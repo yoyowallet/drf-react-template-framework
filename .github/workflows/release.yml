@@ -9,6 +9,8 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
+    - name: test local action
+      uses: ./.github/actions/drf-react-template-framework-build
     - name: Check out repository
       uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python }}
