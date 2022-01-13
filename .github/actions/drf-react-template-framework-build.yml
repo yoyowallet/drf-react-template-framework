@@ -1,0 +1,31 @@
+name: 'drf-react-template-framework-build'
+description: 'Repeatable build steps for the repo'
+inputs:
+  python-version:
+    description: 'Version of Python to build with'
+    required: true
+    default: "3.10"
+runs:
+  using: "composite"
+  steps:
+    - name: Check out repository
+      uses: actions/checkout@v2
+    - name: Set up Python ${{ inputs.python }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ inputs.python }}
+    - name: Install Poetry
+      uses: snok/install-poetry@v1.3
+      with:
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+        installer-parallel: true
+    - name: Load cached venv
+      id: cached-poetry-dependencies
+      uses: actions/cache@v2
+      with:
+        path: .venv
+        key: venv-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+    - name: Install dependencies
+      if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+      run: poetry install --no-interaction --no-root
