@@ -8,10 +8,10 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Set up Python ${{ input.python-version }}
+    - name: Set up Python ${{ inputs.python-version }}
       uses: actions/setup-python@v2
       with:
-        python-version: ${{ input.python-version }}
+        python-version: ${{ inputs.python-version }}
     - name: Install Poetry
       uses: snok/install-poetry@v1.3
       with:
