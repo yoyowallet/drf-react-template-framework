@@ -25,7 +25,7 @@ jobs:
 
     steps:
     - name: test local action
-      uses: ./.github/actions/drf-react-template-framework-build
+      uses: ./.github/actions/drf-react-template-framework-build@latest
     - name: Check out repository
       uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python }}
