@@ -11,25 +11,10 @@ jobs:
     steps:
     - name: Check out repository
       uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python }}
-      uses: actions/setup-python@v2
+    - name: Build steps
+      uses: ./.github/actions/drf-react-template-framework-build
       with:
-        python-version: ${{ matrix.python }}
-    - name: Install Poetry
-      uses: snok/install-poetry@v1.3
-      with:
-        virtualenvs-create: true
-        virtualenvs-in-project: true
-        installer-parallel: true
-    - name: Load cached venv
-      id: cached-poetry-dependencies
-      uses: actions/cache@v2
-      with:
-        path: .venv
-        key: venv-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
-    - name: Install dependencies
-      if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-      run: poetry install --no-interaction --no-root
+        python-version: "3.10"
     - name: Build and publish
       uses: d1618033/gh-action-python-publish-using-poetry@0.1.1
       with:
