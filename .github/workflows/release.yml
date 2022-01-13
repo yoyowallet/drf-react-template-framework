@@ -9,26 +9,14 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python 3.9
-        uses: actions/setup-python@v1
-        with:
-          python-version: 3.9
-      - name: Install Poetry
-        uses: snok/install-poetry@v1.1.1
-      - name: Cache Poetry virtualenv
-        uses: actions/cache@v1
-        id: cache
-        with:
-          path: ~/.virtualenvs
-          key: poetry-${{ hashFiles('**/poetry.lock') }}
-          restore-keys: |
-            poetry-${{ hashFiles('**/poetry.lock') }}
-      - name: Install Dependencies
-        run: poetry install
-        if: steps.cache.outputs.cache-hit != 'true'
-      - name: Build and publish
-        uses: d1618033/gh-action-python-publish-using-poetry@0.1.1
-        with:
-          pypi_username: '__token__'
-          pypi_password: ${{ secrets.PYPI_TOKEN }}
+    - name: Check out repository
+      uses: actions/checkout@v2
+    - name: Build steps
+      uses: ./.github/actions/drf-react-template-framework-build
+      with:
+        python-version: "3.10"
+    - name: Build and publish
+      uses: d1618033/gh-action-python-publish-using-poetry@0.1.1
+      with:
+        pypi_username: '__token__'
+        pypi_password: ${{ secrets.PYPI_TOKEN }}
